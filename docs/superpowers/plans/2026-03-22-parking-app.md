@@ -68,7 +68,7 @@ node_modules/
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "test": "node --experimental-vm-modules node_modules/.bin/jest"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
   "devDependencies": {
     "jest": "^29.7.0"
@@ -81,7 +81,6 @@ node_modules/
 ```js
 export default {
   testEnvironment: 'node',
-  extensionsToTreatAsEsm: ['.js'],
 };
 ```
 
