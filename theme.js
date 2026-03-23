@@ -10,53 +10,22 @@ function setPreference(value) {
   localStorage.setItem(STORAGE_KEY, value);
 }
 
-let _mediaListener = null;
-let _mq = null;
-
-function _applyDark() {
-  document.documentElement.setAttribute('data-theme', 'dark');
-}
-
-function _applyLight() {
-  document.documentElement.removeAttribute('data-theme');
-}
-
-function _removeMediaListener() {
-  if (_mediaListener && _mq) {
-    _mq.removeEventListener('change', _mediaListener);
-    _mediaListener = null;
-    _mq = null;
-  }
-}
-
 /**
  * Reads the stored preference and applies the correct theme to <html>.
+ * - 'dark'   → data-theme="dark"  (explicit dark CSS rules apply)
+ * - 'light'  → data-theme="light" (no dark rules; system media query excluded by attribute)
+ * - 'system' → no attribute       (CSS @media prefers-color-scheme handles it automatically)
+ *
  * Must be called before any UI renders to avoid flash of wrong theme.
  */
 export function applyTheme() {
-  _removeMediaListener();
-
   const pref = getPreference();
-
   if (pref === 'dark') {
-    _applyDark();
+    document.documentElement.setAttribute('data-theme', 'dark');
   } else if (pref === 'light') {
-    _applyLight();
+    document.documentElement.setAttribute('data-theme', 'light');
   } else {
-    // system — follow OS, update on change
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    if (mq.matches) {
-      _applyDark();
-    } else {
-      _applyLight();
-    }
-    _mq = mq;
-    _mediaListener = (e) => {
-      if (getPreference() === 'system') {
-        e.matches ? _applyDark() : _applyLight();
-      }
-    };
-    _mq.addEventListener('change', _mediaListener);
+    document.documentElement.removeAttribute('data-theme');
   }
 }
 
