@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parking Booking</title>
+  <link rel="stylesheet" href="style.css" />
+  <!--
+    MSAL.js 2.x UMD bundle — exposes the global `msal` object used by auth.js.
+    Pin to a specific version. Check https://github.com/AzureAD/microsoft-authentication-library-for-js
+    for the latest 2.x release if updating.
+  -->
+  <script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>Parking Booking</h1>
+    </header>
+
+    <div id="error-banner" role="alert" hidden></div>
+
+    <nav id="week-nav" aria-label="Week navigation">
+      <button id="btn-prev" aria-label="Previous week">&#8249; Prev</button>
+      <span id="week-label"></span>
+      <button id="btn-next" aria-label="Next week">Next &#8250;</button>
+    </nav>
+
+    <main id="week-grid" aria-live="polite"></main>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
