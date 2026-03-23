@@ -129,6 +129,11 @@ body {
   border-color: var(--s-cyan);
 }
 
+.week-nav-btn:focus-visible {
+  outline: 2px solid var(--s-cyan);
+  outline-offset: 2px;
+}
+
 .week-nav-btn:disabled {
   color: var(--border);
   cursor: default;
@@ -159,11 +164,15 @@ body {
   line-height: 1.4;
 }
 
-/* ── Space header row ────────────────────────────────────────────────────── */
-.space-header {
+/* ── Shared grid layout (space header + day rows) ────────────────────────────────────── */
+.week-grid-row {
   display: grid;
   grid-template-columns: 3rem 1fr 1fr;
   gap: 0.4rem;
+}
+
+/* ── Space header row ────────────────────────────────────────────────────── */
+.space-header {
   padding-bottom: 0.3rem;
 }
 
@@ -179,9 +188,6 @@ body {
 
 /* ── Day rows ────────────────────────────────────────────────────────────── */
 .day-row {
-  display: grid;
-  grid-template-columns: 3rem 1fr 1fr;
-  gap: 0.4rem;
   margin-bottom: 0.4rem;
 }
 
@@ -195,7 +201,7 @@ body {
   align-items: center;
   justify-content: center;
   padding: 0.4rem 0;
-  min-height: 2.75rem; /* 44px touch target at 16px root */
+  min-height: 2.75rem; /* ≈ 41px touch target at 15px root */
   box-shadow: 0 1px 4px rgba(0, 70, 136, 0.06);
 }
 
@@ -227,7 +233,7 @@ body {
   justify-content: center;
   gap: 0.1rem;
   text-align: center;
-  min-height: 2.75rem; /* 44px touch target */
+  min-height: 2.75rem; /* ≈ 41px touch target at 15px root */
   transition: filter 0.12s, transform 0.1s;
 }
 
@@ -286,6 +292,12 @@ body {
 .cell-mine:hover {
   filter: brightness(0.96);
   transform: scale(0.98);
+}
+
+.cell-free:focus-visible,
+.cell-mine:focus-visible {
+  outline: 2px solid var(--s-cyan);
+  outline-offset: 2px;
 }
 
 /* Taken — red */
