@@ -1,15 +1,7 @@
-// Replace ALL values here once Azure infrastructure is provisioned.
-// See the provisioning prerequisites in the design spec.
+// Replace each placeholder with the actual URL from Power Automate
+// after creating the flows (see docs/SETUP.md).
 
-export const TENANT_ID = 'YOUR_TENANT_ID';
-export const CLIENT_ID = 'YOUR_CLIENT_ID';
-
-// SharePoint site — used to build the Graph API URL
-// Format: 'yourtenant.sharepoint.com'
-export const SHAREPOINT_HOSTNAME = 'YOUR_SHAREPOINT_HOSTNAME';
-
-// Format: '/sites/yoursitename'
-export const SHAREPOINT_SITE_PATH = 'YOUR_SHAREPOINT_SITE_PATH';
-
-// SharePoint List GUID — find in List Settings > List information URL
-export const LIST_ID = 'YOUR_LIST_ID';
+export const FLOW_GET_EMPLOYEES  = 'YOUR_PA_GET_EMPLOYEES_URL';
+export const FLOW_GET_BOOKINGS   = 'YOUR_PA_GET_BOOKINGS_URL';
+export const FLOW_BOOK_SPACE     = 'YOUR_PA_BOOK_SPACE_URL';
+export const FLOW_CANCEL_BOOKING = 'YOUR_PA_CANCEL_BOOKING_URL';
