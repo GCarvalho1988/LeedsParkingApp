@@ -361,3 +361,89 @@ body {
     box-shadow: none;
   }
 }
+
+/* ── Identity overlay ────────────────────────────────────────────────────── */
+/* Shown inside #app before the booking grid when no name is stored */
+.identity-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+  padding: 0.5rem 0 1rem;
+}
+
+.identity-heading {
+  font-family: 'Barlow Condensed', Arial Narrow, sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--s-navy);
+  text-align: center;
+  margin-bottom: 0.25rem;
+}
+
+.identity-select,
+.identity-input {
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border: 1.5px solid var(--border);
+  border-radius: 2px;
+  font-family: 'Barlow', Arial, sans-serif;
+  font-size: 0.875rem;
+  color: var(--body);
+  background: var(--white);
+  appearance: auto;
+}
+
+.identity-select:focus,
+.identity-input:focus {
+  outline: 2px solid var(--s-cyan);
+  outline-offset: -1px;
+  border-color: var(--s-cyan);
+}
+
+.identity-submit {
+  width: 100%;
+  padding: 0.65rem;
+  background: var(--s-orange);
+  color: var(--white);
+  border: none;
+  border-radius: 2px;
+  font-family: 'Barlow Condensed', Arial Narrow, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: filter 0.12s;
+}
+
+.identity-submit:hover:not(:disabled) {
+  filter: brightness(0.93);
+}
+
+.identity-submit:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.identity-error {
+  font-size: 0.78rem;
+  color: #991b1b;
+  text-align: center;
+}
+
+/* ── "Not you?" link in week nav ─────────────────────────────────────────── */
+.not-you-link {
+  font-family: 'Barlow', Arial, sans-serif;
+  font-size: 0.62rem;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  line-height: 1.2;
+}
+
+.not-you-link:hover {
+  color: var(--s-navy);
+}
