@@ -150,6 +150,7 @@ body {
 
 /* ── Error banner ────────────────────────────────────────────────────────── */
 /* Inserted between week nav and grid by ui.js — pushes grid down */
+.error-banner[hidden] { display: none; }
 .error-banner {
   display: flex;
   align-items: flex-start;
