@@ -1,6 +1,6 @@
 import { weekStart, weekDays, isPast, isCurrentWeek, isBeyondMaxWeek, toISODate, formatDay } from './dates.js';
-import { getBookingsForWeek, bookSpace, cancelBooking } from './api.js';
-import { getAccount } from './auth.js';
+import { getBookingsForWeek, bookSpace, cancelBooking, getEmployees } from './api.js';
+import { getName, setName, clearName } from './identity.js';
 
 let currentMonday = weekStart(new Date());
 
@@ -9,6 +9,104 @@ let currentMonday = weekStart(new Date());
 let _navEl = null;
 let _errorEl = null;
 let _gridEl = null;
+
+// ─── Identity overlay ───────────────────────────────────────────────────────
+
+/**
+ * Renders the name-picker overlay inside #app.
+ * Calls onComplete() after the user successfully sets their name.
+ * @param {() => void} onComplete
+ */
+export async function renderIdentityOverlay(onComplete) {
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'identity-overlay';
+
+  const heading = document.createElement('p');
+  heading.className = 'identity-heading';
+  heading.textContent = 'Who are you?';
+  overlay.appendChild(heading);
+
+  // Load employees — show error + retry if the flow is unreachable
+  let employees = [];
+  try {
+    employees = await getEmployees();
+  } catch {
+    const errMsg = document.createElement('p');
+    errMsg.className = 'identity-error';
+    errMsg.textContent = 'Could not load employee list. Check your connection.';
+    const retryBtn = document.createElement('button');
+    retryBtn.className = 'week-nav-btn';
+    retryBtn.textContent = 'Retry';
+    retryBtn.addEventListener('click', () => renderIdentityOverlay(onComplete));
+    overlay.appendChild(errMsg);
+    overlay.appendChild(retryBtn);
+    app.appendChild(overlay);
+    return;
+  }
+
+  // Dropdown
+  const select = document.createElement('select');
+  select.className = 'identity-select';
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = '— Select your name —';
+  placeholder.disabled = true;
+  placeholder.selected = true;
+  select.appendChild(placeholder);
+  employees.forEach((name) => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    select.appendChild(opt);
+  });
+  const otherOpt = document.createElement('option');
+  otherOpt.value = '__other__';
+  otherOpt.textContent = 'Other…';
+  select.appendChild(otherOpt);
+  overlay.appendChild(select);
+
+  // Text input for "Other…" (hidden until selected)
+  const otherInput = document.createElement('input');
+  otherInput.type = 'text';
+  otherInput.className = 'identity-input';
+  otherInput.placeholder = 'Enter your name';
+  otherInput.hidden = true;
+  overlay.appendChild(otherInput);
+
+  // Submit button — disabled until a non-empty name is resolved
+  const submitBtn = document.createElement('button');
+  submitBtn.className = 'identity-submit';
+  submitBtn.textContent = "Let's go";
+  submitBtn.disabled = true;
+  overlay.appendChild(submitBtn);
+
+  function getResolvedName() {
+    if (select.value === '__other__') return otherInput.value.trim();
+    return select.value;
+  }
+
+  function updateSubmitState() {
+    submitBtn.disabled = !getResolvedName();
+  }
+
+  select.addEventListener('change', () => {
+    otherInput.hidden = select.value !== '__other__';
+    updateSubmitState();
+  });
+  otherInput.addEventListener('input', updateSubmitState);
+
+  submitBtn.addEventListener('click', () => {
+    const name = getResolvedName();
+    if (!name) return;
+    setName(name);
+    onComplete();
+  });
+
+  app.appendChild(overlay);
+}
 
 // ─── Public API ────────────────────────────────────────────────────────────
 
@@ -47,9 +145,26 @@ function _buildNav() {
   prevBtn.innerHTML = '&#8249;';
   prevBtn.dataset.role = 'prev';
 
+  const centre = document.createElement('div');
+  centre.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:0.15rem';
+
   const label = document.createElement('span');
   label.className = 'week-nav-label';
   label.dataset.role = 'label';
+
+  const notYouBtn = document.createElement('button');
+  notYouBtn.className = 'not-you-link';
+  notYouBtn.dataset.role = 'not-you';
+  notYouBtn.addEventListener('click', () => {
+    clearName();
+    _navEl = null;
+    _errorEl = null;
+    _gridEl = null;
+    renderIdentityOverlay(() => render());
+  });
+
+  centre.appendChild(label);
+  centre.appendChild(notYouBtn);
 
   const nextBtn = document.createElement('button');
   nextBtn.className = 'week-nav-btn';
@@ -70,7 +185,7 @@ function _buildNav() {
   });
 
   nav.appendChild(prevBtn);
-  nav.appendChild(label);
+  nav.appendChild(centre);
   nav.appendChild(nextBtn);
   return nav;
 }
@@ -82,6 +197,7 @@ function _updateNav() {
 
   _navEl.querySelector('[data-role="label"]').textContent =
     `${formatDay(days[0])} – ${formatDay(days[4])}`;
+  _navEl.querySelector('[data-role="not-you"]').textContent = `Not you? ${getName()}`;
   _navEl.querySelector('[data-role="prev"]').disabled = isCurrentWeek(currentMonday);
   _navEl.querySelector('[data-role="next"]').disabled = isBeyondMaxWeek(nextMonday);
 }
@@ -128,8 +244,7 @@ async function _loadAndRenderWeek() {
 // ─── Grid rendering ────────────────────────────────────────────────────────
 
 function _renderGrid(days, bookings) {
-  const account = getAccount();
-  const userEmail = account.username.toLowerCase();
+  const currentName = getName();
   _gridEl.innerHTML = '';
 
   // Space header row
@@ -167,7 +282,7 @@ function _renderGrid(days, bookings) {
       const booking = bookings.find(
         (b) => b.date === dateStr && b.space === space
       ) ?? null;
-      row.appendChild(_buildCell(dateStr, space, booking, userEmail, past));
+      row.appendChild(_buildCell(dateStr, space, booking, currentName, past));
     }
 
     _gridEl.appendChild(row);
@@ -177,7 +292,7 @@ function _renderGrid(days, bookings) {
   _gridEl.appendChild(_buildLegend());
 }
 
-function _buildCell(date, space, booking, userEmail, past) {
+function _buildCell(date, space, booking, currentName, past) {
   const cell = document.createElement('div');
   cell.className = 'cell';
   cell.setAttribute('aria-label', `Space ${space}`);
@@ -207,9 +322,9 @@ function _buildCell(date, space, booking, userEmail, past) {
     return cell;
   }
 
-  if (booking.bookedByEmail.toLowerCase() === userEmail) {
+  if (booking.bookedBy === currentName) {
     cell.classList.add('cell-mine');
-    stateEl.textContent = 'You \u2715';
+    stateEl.textContent = `${currentName} \u2715`;
     subEl.textContent = 'Tap to cancel';
     cell.appendChild(stateEl);
     cell.appendChild(subEl);
@@ -252,12 +367,11 @@ function _buildLegend() {
 // ─── Interactions ──────────────────────────────────────────────────────────
 
 async function _handleBook(date, space, cell) {
-  const account = getAccount();
   cell.classList.add('loading');
   _clearError();
 
   try {
-    const result = await bookSpace(date, space, account.name, account.username);
+    const result = await bookSpace(date, space, getName());
     if (result.error === 'alreadyBooked') {
       _showCellMessage(cell, 'You already have a space booked this day');
       cell.classList.remove('loading');
