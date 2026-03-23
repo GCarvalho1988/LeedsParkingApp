@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Parking Booking</title>
+  <title>Parking Bookings — Sectra UK&amp;I</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
   <!--
     MSAL.js 2.x UMD bundle — exposes the global `msal` object used by auth.js.
@@ -13,20 +16,14 @@
   <script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
 </head>
 <body>
-  <div id="app">
-    <header>
-      <h1>Parking Booking</h1>
-    </header>
-
-    <div id="error-banner" role="alert" hidden></div>
-
-    <nav id="week-nav" aria-label="Week navigation">
-      <button id="btn-prev" aria-label="Previous week">&#8249; Prev</button>
-      <span id="week-label"></span>
-      <button id="btn-next" aria-label="Next week">Next &#8250;</button>
-    </nav>
-
-    <main id="week-grid" aria-live="polite"></main>
+  <div class="card">
+    <div class="card-header">
+      <p class="card-header-eyebrow">Sectra UK&amp;I &middot; Leeds Office</p>
+      <h1 class="card-header-title">Parking <em>Bookings</em></h1>
+    </div>
+    <div class="card-body">
+      <div id="app"></div>
+    </div>
   </div>
 
   <script type="module" src="app.js"></script>
