@@ -26,7 +26,7 @@ beforeEach(() => jest.clearAllMocks());
 
 describe('getEmployees', () => {
   test('returns the employee name array from the flow', async () => {
-    mockFetch(['Alice Smith', 'Bob Jones']);
+    mockFetch([{ '': 'Alice Smith' }, { '': 'Bob Jones' }]);
     const result = await getEmployees();
     expect(result).toEqual(['Alice Smith', 'Bob Jones']);
     expect(fetch).toHaveBeenCalledWith(

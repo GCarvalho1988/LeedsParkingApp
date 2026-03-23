@@ -28,7 +28,8 @@ async function flowFetch(url, options = {}) {
  * @returns {Promise<string[]>}
  */
 export async function getEmployees() {
-  return flowFetch(FLOW_GET_EMPLOYEES);
+  const data = await flowFetch(FLOW_GET_EMPLOYEES);
+  return data.map((e) => Object.values(e)[0]);
 }
 
 /**
