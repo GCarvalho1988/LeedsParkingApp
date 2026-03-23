@@ -155,12 +155,10 @@ function _renderGrid(days, bookings) {
     dayLabel.className = 'day-label';
     const abbr = document.createElement('span');
     abbr.className = 'day-abbr';
-    // formatDay returns e.g. "Mon 23 Mar" — split to get abbr and number
-    const [dayAbbr, dayNum] = formatDay(day).split(' ');
-    abbr.textContent = dayAbbr;
+    abbr.textContent = day.toLocaleDateString('en-GB', { weekday: 'short' });
     const num = document.createElement('span');
     num.className = 'day-num';
-    num.textContent = dayNum;
+    num.textContent = day.toLocaleDateString('en-GB', { day: 'numeric' });
     dayLabel.appendChild(abbr);
     dayLabel.appendChild(num);
     row.appendChild(dayLabel);
@@ -182,6 +180,7 @@ function _renderGrid(days, bookings) {
 function _buildCell(date, space, booking, userEmail, past) {
   const cell = document.createElement('div');
   cell.className = 'cell';
+  cell.setAttribute('aria-label', `Space ${space}`);
 
   const stateEl = document.createElement('span');
   stateEl.className = 'cell-state';
@@ -290,10 +289,11 @@ async function _handleCancel(itemId, cell) {
 // ─── Inline cell message (race condition warnings) ─────────────────────────
 
 function _showCellMessage(cell, message) {
-  // Replace the cell-sub line with the message text
   const sub = cell.querySelector('.cell-sub');
   if (sub) {
     sub.className = 'cell-msg';
     sub.textContent = message;
+  } else {
+    _showError(message);
   }
 }
