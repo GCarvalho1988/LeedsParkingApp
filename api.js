@@ -39,10 +39,7 @@ export async function getEmployees() {
  * @returns {Promise<Array<{id: string, date: string, space: number, bookedBy: string}>>}
  */
 export async function getBookingsForWeek(startDate, endDate) {
-  return flowFetch(FLOW_GET_BOOKINGS, {
-    method: 'POST',
-    body: JSON.stringify({ start: startDate, end: endDate }),
-  });
+  return flowFetch(`${FLOW_GET_BOOKINGS}&start=${startDate}&end=${endDate}`);
 }
 
 /**
