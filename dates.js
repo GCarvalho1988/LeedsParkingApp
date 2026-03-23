@@ -44,14 +44,21 @@ export function isCurrentWeek(monday) {
 }
 
 /**
- * Returns true if the given Monday is beyond the rolling 4-week window
- * (current week + 3 more weeks ahead).
+ * Returns all bookable weekdays from today up to 4 weeks ahead.
  */
-export function isBeyondMaxWeek(monday) {
-  const currentMonday = weekStart(new Date());
-  const maxMonday = new Date(currentMonday);
-  maxMonday.setDate(maxMonday.getDate() + 21); // 3 more weeks = 21 days
-  return monday > maxMonday;
+export function bookableDays() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const end = new Date(today);
+  end.setDate(end.getDate() + 28);
+  const days = [];
+  const d = new Date(today);
+  while (d <= end) {
+    const dow = d.getDay();
+    if (dow !== 0 && dow !== 6) days.push(new Date(d));
+    d.setDate(d.getDate() + 1);
+  }
+  return days;
 }
 
 /**

@@ -1,12 +1,8 @@
-import { weekStart, weekDays, isPast, isCurrentWeek, isBeyondMaxWeek, toISODate, formatDay } from './dates.js';
+import { bookableDays, isPast, toISODate, formatDay } from './dates.js';
 import { getBookingsForWeek, bookSpace, cancelBooking, getEmployees } from './api.js';
 import { getName, setName, clearName } from './identity.js';
 
-let currentMonday = weekStart(new Date());
-
-// Module-level references to the dynamically created nav and error banner,
-// so _renderNav can update them on re-render without re-creating them.
-let _navEl = null;
+let _headerEl = null;
 let _errorEl = null;
 let _gridEl = null;
 
@@ -118,88 +114,43 @@ export async function renderIdentityOverlay(onComplete) {
 export function render() {
   const app = document.getElementById('app');
 
-  if (!_navEl) {
-    // First render: build the skeleton
-    _navEl = _buildNav();
+  if (!_headerEl) {
+    _headerEl = _buildHeader();
     _errorEl = _buildErrorBanner();
     _gridEl = document.createElement('div');
     _gridEl.id = 'week-grid';
-    app.appendChild(_navEl);
+    app.appendChild(_headerEl);
     app.appendChild(_errorEl);
     app.appendChild(_gridEl);
   }
 
-  _updateNav();
-  _loadAndRenderWeek();
+  _updateHeader();
+  _loadAndRenderAll();
 }
 
-// ─── Navigation ────────────────────────────────────────────────────────────
+// ─── Header ─────────────────────────────────────────────────────────────────
 
-function _buildNav() {
-  const nav = document.createElement('div');
-  nav.className = 'week-nav';
-
-  const prevBtn = document.createElement('button');
-  prevBtn.className = 'week-nav-btn';
-  prevBtn.setAttribute('aria-label', 'Previous week');
-  prevBtn.innerHTML = '&#8249;';
-  prevBtn.dataset.role = 'prev';
-
-  const centre = document.createElement('div');
-  centre.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:0.15rem';
-
-  const label = document.createElement('span');
-  label.className = 'week-nav-label';
-  label.dataset.role = 'label';
+function _buildHeader() {
+  const header = document.createElement('div');
+  header.className = 'week-nav';
 
   const notYouBtn = document.createElement('button');
   notYouBtn.className = 'not-you-link';
   notYouBtn.dataset.role = 'not-you';
   notYouBtn.addEventListener('click', () => {
     clearName();
-    _navEl = null;
+    _headerEl = null;
     _errorEl = null;
     _gridEl = null;
     renderIdentityOverlay(() => render());
   });
 
-  centre.appendChild(label);
-  centre.appendChild(notYouBtn);
-
-  const nextBtn = document.createElement('button');
-  nextBtn.className = 'week-nav-btn';
-  nextBtn.setAttribute('aria-label', 'Next week');
-  nextBtn.innerHTML = '&#8250;';
-  nextBtn.dataset.role = 'next';
-
-  prevBtn.addEventListener('click', () => {
-    currentMonday = new Date(currentMonday);
-    currentMonday.setDate(currentMonday.getDate() - 7);
-    render();
-  });
-
-  nextBtn.addEventListener('click', () => {
-    currentMonday = new Date(currentMonday);
-    currentMonday.setDate(currentMonday.getDate() + 7);
-    render();
-  });
-
-  nav.appendChild(prevBtn);
-  nav.appendChild(centre);
-  nav.appendChild(nextBtn);
-  return nav;
+  header.appendChild(notYouBtn);
+  return header;
 }
 
-function _updateNav() {
-  const days = weekDays(currentMonday);
-  const nextMonday = new Date(currentMonday);
-  nextMonday.setDate(nextMonday.getDate() + 7);
-
-  _navEl.querySelector('[data-role="label"]').textContent =
-    `${formatDay(days[0])} – ${formatDay(days[4])}`;
-  _navEl.querySelector('[data-role="not-you"]').textContent = `Not you? ${getName()}`;
-  _navEl.querySelector('[data-role="prev"]').disabled = isCurrentWeek(currentMonday);
-  _navEl.querySelector('[data-role="next"]').disabled = isBeyondMaxWeek(nextMonday);
+function _updateHeader() {
+  _headerEl.querySelector('[data-role="not-you"]').textContent = `Not you? ${getName()}`;
 }
 
 // ─── Error banner ───────────────────────────────────────────────────────────
@@ -224,10 +175,10 @@ function _clearError() {
 
 // ─── Grid loading ──────────────────────────────────────────────────────────
 
-async function _loadAndRenderWeek() {
-  const days = weekDays(currentMonday);
+async function _loadAndRenderAll() {
+  const days = bookableDays();
   const startDate = toISODate(days[0]);
-  const endDate = toISODate(days[4]);
+  const endDate = toISODate(days[days.length - 1]);
 
   _gridEl.innerHTML = '<p style="text-align:center;color:var(--muted);padding:1.5rem 0;font-size:0.85rem;">Loading\u2026</p>';
   _clearError();
@@ -257,8 +208,21 @@ function _renderGrid(days, bookings) {
   `;
   _gridEl.appendChild(header);
 
-  // Day rows
+  // Day rows — insert a week label whenever the week changes
+  let lastWeekMonday = null;
   for (const day of days) {
+    const monday = new Date(day);
+    monday.setDate(monday.getDate() - (monday.getDay() - 1));
+    monday.setHours(0, 0, 0, 0);
+    if (!lastWeekMonday || monday.getTime() !== lastWeekMonday.getTime()) {
+      lastWeekMonday = monday;
+      const weekLabel = document.createElement('div');
+      weekLabel.className = 'week-label';
+      const friday = new Date(monday);
+      friday.setDate(friday.getDate() + 4);
+      weekLabel.textContent = `${formatDay(monday)} – ${formatDay(friday)}`;
+      _gridEl.appendChild(weekLabel);
+    }
     const dateStr = toISODate(day);
     const past = isPast(day);
 
@@ -379,7 +343,7 @@ async function _handleBook(date, space, cell) {
       _showCellMessage(cell, `Just taken by ${result.bookedBy} \u2014 try the other space`);
       cell.classList.remove('loading');
     } else {
-      await _loadAndRenderWeek();
+      await _loadAndRenderAll();
     }
   } catch {
     _showError('Could not complete booking. Please try again.');
@@ -393,7 +357,7 @@ async function _handleCancel(itemId, cell) {
 
   try {
     await cancelBooking(itemId);
-    await _loadAndRenderWeek();
+    await _loadAndRenderAll();
   } catch {
     _showError('Could not cancel booking. Please try again.');
     cell.classList.remove('loading');

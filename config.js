@@ -1,7 +1,7 @@
-// Replace each placeholder with the actual URL from Power Automate
-// after creating the flows (see docs/SETUP.md).
-
-export const FLOW_GET_EMPLOYEES  = 'https://14b62b3d61ff4f83a762a597aba3d4.aa.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/06b2b571209344c9952706859f3d6735/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=TMBtFIYjUc_hMGgQO67NqFg3TzluPBe_JLjz0Bw5Rzo';
-export const FLOW_GET_BOOKINGS   = 'https://14b62b3d61ff4f83a762a597aba3d4.aa.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/b0add251373a437c9540e178880ac791/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=OaRF8w3I2L1ruNPKZm-Kmqz5JEyhw8CRP37PJgYrF6o';
-export const FLOW_BOOK_SPACE     = 'https://14b62b3d61ff4f83a762a597aba3d4.aa.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/1c8ef934d2c54e4d8a5c4c8cd7ee4153/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=7FS3RgyjrMhxzBhOFBPWNe74II_bUQq1V-edaMQIKEA';
-export const FLOW_CANCEL_BOOKING = 'https://14b62b3d61ff4f83a762a597aba3d4.aa.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/6aec311fbe9741339087a4aa451fd02b/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=2IFYD1sDtyiSXkcLhE7qtAHEq521zvqC9zA_XMd0oqg';
+// Power Automate URLs are stored as environment variables in Netlify.
+// Set these in: Netlify dashboard → Site → Environment variables
+//
+// FLOW_GET_EMPLOYEES
+// FLOW_GET_BOOKINGS
+// FLOW_BOOK_SPACE
+// FLOW_CANCEL_BOOKING
