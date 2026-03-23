@@ -5,6 +5,8 @@ import { getName, setName, clearName } from './identity.js';
 let _headerEl = null;
 let _errorEl = null;
 let _gridEl = null;
+let _days = null;
+let _bookings = null;
 
 // ─── Identity overlay ───────────────────────────────────────────────────────
 
@@ -176,16 +178,16 @@ function _clearError() {
 // ─── Grid loading ──────────────────────────────────────────────────────────
 
 async function _loadAndRenderAll() {
-  const days = bookableDays();
-  const startDate = toISODate(days[0]);
-  const endDate = toISODate(days[days.length - 1]);
+  _days = bookableDays();
+  const startDate = toISODate(_days[0]);
+  const endDate = toISODate(_days[_days.length - 1]);
 
   _gridEl.innerHTML = '<p style="text-align:center;color:var(--muted);padding:1.5rem 0;font-size:0.85rem;">Loading\u2026</p>';
   _clearError();
 
   try {
-    const bookings = await getBookingsForWeek(startDate, endDate);
-    _renderGrid(days, bookings);
+    _bookings = await getBookingsForWeek(startDate, endDate);
+    _renderGrid(_days, _bookings);
   } catch {
     _showError('Could not load bookings. Check your connection and try again.');
     _gridEl.innerHTML = '';
@@ -343,7 +345,8 @@ async function _handleBook(date, space, cell) {
       _showCellMessage(cell, `Just taken by ${result.bookedBy} \u2014 try the other space`);
       cell.classList.remove('loading');
     } else {
-      await _loadAndRenderAll();
+      _bookings.push({ id: result.id, date, space, bookedBy: getName() });
+      _renderGrid(_days, _bookings);
     }
   } catch {
     _showError('Could not complete booking. Please try again.');
@@ -357,7 +360,8 @@ async function _handleCancel(itemId, cell) {
 
   try {
     await cancelBooking(itemId);
-    await _loadAndRenderAll();
+    _bookings = _bookings.filter((b) => b.id !== itemId);
+    _renderGrid(_days, _bookings);
   } catch {
     _showError('Could not cancel booking. Please try again.');
     cell.classList.remove('loading');
