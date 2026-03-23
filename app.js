@@ -25,9 +25,8 @@ async function bootstrap() {
 
 bootstrap().catch((err) => {
   console.error('App failed to initialise:', err);
-  const banner = document.getElementById('error-banner');
-  if (banner) {
-    banner.textContent = 'Authentication error. Please refresh the page.';
-    banner.hidden = false;
+  const app = document.getElementById('app');
+  if (app) {
+    app.innerHTML = '<p style="color:#991b1b;padding:1rem;font-size:0.85rem;">Authentication error. Please refresh the page.</p>';
   }
 });
