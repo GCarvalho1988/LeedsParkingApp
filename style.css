@@ -519,6 +519,17 @@ body {
   border-color: var(--border);
 }
 
+/* Elements using --white for text on dark/coloured surfaces — must stay white */
+[data-theme="dark"] .card-header-title { color: rgba(255, 255, 255, 0.9); }
+[data-theme="dark"] .identity-submit { color: #ffffff; }
+[data-theme="dark"] .day-num { color: #c9d1d9; }
+[data-theme="dark"] .week-nav-btn { color: #8b949e; border-color: #30363d; }
+[data-theme="dark"] .week-nav-btn:hover:not(:disabled) { background: #30363d; border-color: #58a6ff; color: #c9d1d9; }
+[data-theme="dark"] .week-nav-btn:disabled { color: #484f58; }
+[data-theme="dark"] .identity-heading { color: #58a6ff; }
+[data-theme="dark"] .not-you-link { color: #8b949e; }
+[data-theme="dark"] .not-you-link:hover { color: #c9d1d9; }
+
 /* System fallback — activates when no data-theme attribute is set */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
@@ -540,6 +551,15 @@ body {
   :root:not([data-theme]) .error-banner { background: #2d1616; border-left-color: #f85149; color: #fca5a5; }
   :root:not([data-theme]) .identity-select,
   :root:not([data-theme]) .identity-input { background: #21262d; color: #c9d1d9; border-color: #30363d; }
+  :root:not([data-theme]) .card-header-title { color: rgba(255, 255, 255, 0.9); }
+  :root:not([data-theme]) .identity-submit { color: #ffffff; }
+  :root:not([data-theme]) .day-num { color: #c9d1d9; }
+  :root:not([data-theme]) .week-nav-btn { color: #8b949e; border-color: #30363d; }
+  :root:not([data-theme]) .week-nav-btn:hover:not(:disabled) { background: #30363d; border-color: #58a6ff; color: #c9d1d9; }
+  :root:not([data-theme]) .week-nav-btn:disabled { color: #484f58; }
+  :root:not([data-theme]) .identity-heading { color: #58a6ff; }
+  :root:not([data-theme]) .not-you-link { color: #8b949e; }
+  :root:not([data-theme]) .not-you-link:hover { color: #c9d1d9; }
 }
 
 /* ── Theme toggle pill ───────────────────────────────────────────────────── */

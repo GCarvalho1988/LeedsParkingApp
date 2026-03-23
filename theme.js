@@ -11,6 +11,7 @@ function setPreference(value) {
 }
 
 let _mediaListener = null;
+let _mq = null;
 
 function _applyDark() {
   document.documentElement.setAttribute('data-theme', 'dark');
@@ -21,9 +22,10 @@ function _applyLight() {
 }
 
 function _removeMediaListener() {
-  if (_mediaListener) {
-    window.matchMedia('(prefers-color-scheme: dark)').removeEventListener('change', _mediaListener);
+  if (_mediaListener && _mq) {
+    _mq.removeEventListener('change', _mediaListener);
     _mediaListener = null;
+    _mq = null;
   }
 }
 
@@ -48,12 +50,13 @@ export function applyTheme() {
     } else {
       _applyLight();
     }
+    _mq = mq;
     _mediaListener = (e) => {
       if (getPreference() === 'system') {
         e.matches ? _applyDark() : _applyLight();
       }
     };
-    mq.addEventListener('change', _mediaListener);
+    _mq.addEventListener('change', _mediaListener);
   }
 }
 
