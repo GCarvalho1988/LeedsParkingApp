@@ -6,6 +6,7 @@ export default async (req) => {
   const { id } = await req.json();
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, 150 * attempt));
     const { data: bookings, etag } = await readBlobWithEtag('bookings');
     if (bookings === null) {
       return new Response(JSON.stringify({ error: 'storageError' }), { status: 500 });

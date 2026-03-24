@@ -399,6 +399,9 @@ async function _handleBook(date, space, cell) {
     } else if (result.error === 'taken') {
       _showCellMessage(cell, `Just taken by ${result.bookedBy} \u2014 try the other space`);
       cell.classList.remove('loading');
+    } else if (result.error === 'conflict') {
+      _showCellMessage(cell, 'Could not save \u2014 please try again');
+      cell.classList.remove('loading');
     } else {
       _bookings.push({ id: result.id, date: dateStr, space, bookedBy: getName() });
       _renderGrid(_days, _bookings);

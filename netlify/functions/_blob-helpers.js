@@ -37,18 +37,19 @@ export async function readBlobWithEtag(key) {
 
 // Conditional write using the ETag from readBlobWithEtag.
 // Throws if another write landed between the read and this write (caller should retry).
-// If etag is null (blob was absent), falls back to unconditional write.
-// NOTE: the correct Netlify Blobs option is `onlyIfMatch`, not `etag`.
-// On mismatch the store returns { modified: false } rather than throwing,
-// so we inspect the return value and throw ourselves to trigger the caller's retry.
+//
+// When etag is present  → onlyIfMatch: only write if blob still has this etag.
+// When etag is null     → onlyIfNew:   only write if blob truly does not exist.
+//
+// The null/absent case is critical: a stale read can return null etag even when
+// the blob EXISTS (just not yet propagated to this replica). Using onlyIfNew
+// instead of an unconditional write prevents overwriting data we couldn't see.
+// On failure in both cases we throw so the caller's retry loop re-reads fresh state.
 export async function writeBlobConditional(key, data, etag) {
   const store = _store();
-  if (etag) {
-    const result = await store.set(key, JSON.stringify(data), { onlyIfMatch: etag });
-    if (result && result.modified === false) {
-      throw new Error('Conditional write failed: ETag mismatch');
-    }
-  } else {
-    await store.set(key, JSON.stringify(data));
+  const opts = etag ? { onlyIfMatch: etag } : { onlyIfNew: true };
+  const result = await store.set(key, JSON.stringify(data), opts);
+  if (result && result.modified === false) {
+    throw new Error('Conditional write failed: ETag mismatch or blob already exists');
   }
 }
