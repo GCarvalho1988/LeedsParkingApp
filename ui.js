@@ -5,6 +5,7 @@ import {
   adminVerifyPassword, adminAddEmployee, adminRemoveEmployee, adminBookSpace, adminCancelBooking,
 } from './api.js';
 import { getName, setName, clearName } from './identity.js';
+import { addPendingBooking, addCancelledId, mergeWithSession } from './session-cache.js';
 
 let _headerEl = null;
 let _errorEl = null;
@@ -192,10 +193,12 @@ async function _loadAndRenderAll() {
   _clearError();
 
   try {
-    [_bookings, _bankHolidays] = await Promise.all([
+    const [blobBookings, holidays] = await Promise.all([
       getBookingsForWeek(startDate, endDate),
       getBankHolidays(),
     ]);
+    _bookings = mergeWithSession(blobBookings);
+    _bankHolidays = holidays;
     _renderGrid(_days, _bookings);
   } catch {
     _showError('Could not load bookings. Check your connection and try again.');
@@ -403,7 +406,9 @@ async function _handleBook(date, space, cell) {
       _showCellMessage(cell, 'Could not save \u2014 please try again');
       cell.classList.remove('loading');
     } else {
-      _bookings.push({ id: result.id, date: dateStr, space, bookedBy: getName() });
+      const booking = { id: result.id, date: dateStr, space, bookedBy: getName() };
+      addPendingBooking(booking);
+      _bookings.push(booking);
       _renderGrid(_days, _bookings);
     }
   } catch {
@@ -426,6 +431,7 @@ async function _handleCancel(itemId, cell) {
 
   try {
     await cancelBooking(itemId);
+    addCancelledId(itemId);
     _bookings = _bookings.filter((b) => b.id !== itemId);
     _renderGrid(_days, _bookings);
   } catch {
