@@ -9,7 +9,7 @@ export default async (req) => {
 
   // Reject empty or whitespace-only names before any blob access
   if (!body.name || !body.name.trim()) {
-    return new Response(JSON.stringify({ error: 'invalidName' }), { status: 400 });
+    return new Response(JSON.stringify({ error: 'invalidName' }), { status: 200 });
   }
 
   const employees = await readBlob('employees');
