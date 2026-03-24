@@ -361,24 +361,6 @@ const _bookingInProgress = new Set(); // dates with an in-flight booking request
 // that rapid clicks from a single user never produce concurrent blob writes.
 let _bookingMutex = Promise.resolve();
 
-// Polls get-bookings until the given booking ID appears in the blob, then syncs
-// _bookings with the authoritative server data. Retries up to 6 times (~3 s).
-async function _confirmBookingInBlob(bookingId) {
-  const startDate = toISODate(_days[0]);
-  const endDate   = toISODate(_days[_days.length - 1]);
-  for (let attempt = 0; attempt < 6; attempt++) {
-    await new Promise((r) => setTimeout(r, 500));
-    try {
-      const fresh = await getBookingsForWeek(startDate, endDate);
-      if (fresh.some((b) => b.id === bookingId)) {
-        _bookings = fresh;
-        _renderGrid(_days, _bookings);
-        return;
-      }
-    } catch { /* ignore poll errors */ }
-  }
-  // Blob still stale after 3 s — keep optimistic state, nothing to do
-}
 
 async function _handleBook(date, space, cell) {
   const dateStr = date; // date is already an ISO string (passed from _buildCell as dateStr)
@@ -418,11 +400,8 @@ async function _handleBook(date, space, cell) {
       _showCellMessage(cell, `Just taken by ${result.bookedBy} \u2014 try the other space`);
       cell.classList.remove('loading');
     } else {
-      // Optimistic update so the cell reacts immediately
       _bookings.push({ id: result.id, date: dateStr, space, bookedBy: getName() });
       _renderGrid(_days, _bookings);
-      // Read-after-write: poll until the blob reflects the new booking (max ~3 s)
-      _confirmBookingInBlob(result.id);
     }
   } catch {
     _showError('Could not complete booking. Please try again.');
