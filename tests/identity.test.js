@@ -1,19 +1,19 @@
 import { jest } from '@jest/globals';
 
-// ── Manual localStorage mock (testEnvironment is 'node') ──────────────────
+// ── Manual sessionStorage mock (testEnvironment is 'node') ───────────────────
 const store = {};
-const localStorageMock = {
+const sessionStorageMock = {
   getItem:    jest.fn((key) => Object.prototype.hasOwnProperty.call(store, key) ? store[key] : null),
   setItem:    jest.fn((key, value) => { store[key] = String(value); }),
   removeItem: jest.fn((key) => { delete store[key]; }),
   clear:      jest.fn(() => { Object.keys(store).forEach((k) => delete store[k]); }),
 };
-Object.defineProperty(global, 'localStorage', { value: localStorageMock, writable: true });
+Object.defineProperty(global, 'sessionStorage', { value: sessionStorageMock, writable: true });
 
 const { getName, setName, clearName } = await import('../identity.js');
 
 beforeEach(() => {
-  localStorageMock.clear();
+  sessionStorageMock.clear();
   jest.clearAllMocks();
 });
 
@@ -30,9 +30,9 @@ test('getName returns the stored name after setName', () => {
 
 // ─── setName ──────────────────────────────────────────────────────────────
 
-test('setName stores the name in localStorage', () => {
+test('setName stores the name in sessionStorage', () => {
   setName('Bob Jones');
-  expect(localStorageMock.setItem).toHaveBeenCalledWith('parkingUserName', 'Bob Jones');
+  expect(sessionStorageMock.setItem).toHaveBeenCalledWith('parkingUserName', 'Bob Jones');
 });
 
 // ─── clearName ────────────────────────────────────────────────────────────
@@ -43,7 +43,7 @@ test('clearName removes the stored name', () => {
   expect(getName()).toBeNull();
 });
 
-test('clearName calls localStorage.removeItem with the correct key', () => {
+test('clearName calls sessionStorage.removeItem with the correct key', () => {
   clearName();
-  expect(localStorageMock.removeItem).toHaveBeenCalledWith('parkingUserName');
+  expect(sessionStorageMock.removeItem).toHaveBeenCalledWith('parkingUserName');
 });

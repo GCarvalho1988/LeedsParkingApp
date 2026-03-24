@@ -18,7 +18,7 @@ function req(body) {
 beforeEach(() => jest.clearAllMocks());
 
 describe('cancel-booking: success', () => {
-  test('removes the booking with the given id', async () => {
+  test('removes the booking when id and name match', async () => {
     const bookings = [
       { id: 'abc', date: '2026-04-01', space: 1, bookedBy: 'Alice' },
       { id: 'def', date: '2026-04-02', space: 2, bookedBy: 'Bob' },
@@ -26,7 +26,7 @@ describe('cancel-booking: success', () => {
     mockReadBlobWithEtag.mockResolvedValue({ data: bookings, etag: 'e1' });
     mockWriteBlobConditional.mockResolvedValue();
 
-    const res = await handler(req({ id: 'abc' }));
+    const res = await handler(req({ id: 'abc', name: 'Alice' }));
     expect(await res.json()).toEqual({ success: true });
     expect(mockWriteBlobConditional).toHaveBeenCalledWith(
       'bookings',
@@ -37,10 +37,34 @@ describe('cancel-booking: success', () => {
 
   test('succeeds silently when id does not exist (idempotent)', async () => {
     mockReadBlobWithEtag.mockResolvedValue({ data: [], etag: 'e1' });
-    mockWriteBlobConditional.mockResolvedValue();
 
-    const res = await handler(req({ id: 'nonexistent' }));
+    const res = await handler(req({ id: 'nonexistent', name: 'Alice' }));
     expect(await res.json()).toEqual({ success: true });
+    expect(mockWriteBlobConditional).not.toHaveBeenCalled();
+  });
+});
+
+describe('cancel-booking: ownership enforcement', () => {
+  test('returns 403 forbidden when name does not match bookedBy', async () => {
+    const bookings = [{ id: 'abc', date: '2026-04-01', space: 1, bookedBy: 'Alice' }];
+    mockReadBlobWithEtag.mockResolvedValue({ data: bookings, etag: 'e1' });
+
+    const res = await handler(req({ id: 'abc', name: 'Bob' }));
+    expect(res.status).toBe(403);
+    expect(await res.json()).toEqual({ error: 'forbidden' });
+    expect(mockWriteBlobConditional).not.toHaveBeenCalled();
+  });
+
+  test('returns 400 when id is missing', async () => {
+    const res = await handler(req({ name: 'Alice' }));
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: 'badRequest' });
+  });
+
+  test('returns 400 when name is missing', async () => {
+    const res = await handler(req({ id: 'abc' }));
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: 'badRequest' });
   });
 });
 
@@ -56,16 +80,17 @@ describe('cancel-booking: ETag retry', () => {
       .mockRejectedValueOnce(new Error('412'))
       .mockResolvedValueOnce();
 
-    const res = await handler(req({ id: 'abc' }));
+    const res = await handler(req({ id: 'abc', name: 'Alice' }));
     expect(await res.json()).toEqual({ success: true });
     expect(mockReadBlobWithEtag).toHaveBeenCalledTimes(2);
   });
 
   test('returns conflict after exhausting all 5 retries', async () => {
-    mockReadBlobWithEtag.mockResolvedValue({ data: [], etag: 'e1' });
+    const bookings = [{ id: 'abc', date: '2026-04-01', space: 1, bookedBy: 'Alice' }];
+    mockReadBlobWithEtag.mockResolvedValue({ data: bookings, etag: 'e1' });
     mockWriteBlobConditional.mockRejectedValue(new Error('412'));
 
-    const res = await handler(req({ id: 'abc' }));
+    const res = await handler(req({ id: 'abc', name: 'Alice' }));
     expect(await res.json()).toEqual({ error: 'conflict' });
     expect(mockReadBlobWithEtag).toHaveBeenCalledTimes(5);
   });
@@ -75,7 +100,7 @@ describe('cancel-booking: storage error', () => {
   test('returns storageError when blob is corrupt', async () => {
     mockReadBlobWithEtag.mockResolvedValue({ data: null, etag: null });
 
-    const res = await handler(req({ id: 'abc' }));
+    const res = await handler(req({ id: 'abc', name: 'Alice' }));
     expect(await res.json()).toEqual({ error: 'storageError' });
     expect(res.status).toBe(500);
   });

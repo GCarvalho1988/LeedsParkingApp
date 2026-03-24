@@ -19,11 +19,19 @@ export default async (req) => {
     let responseBody;
 
     if (body.action === 'add') {
+      const { date, space, bookedBy } = body.booking ?? {};
+      if (!date || !space || !bookedBy) {
+        return new Response(JSON.stringify({ error: 'badRequest' }), { status: 400 });
+      }
       const id = crypto.randomUUID();
-      updated = [...bookings, { id, ...body.booking }];
+      updated = [...bookings, { id, date, space, bookedBy }];
       responseBody = { id };
     } else if (body.action === 'cancel') {
-      updated = bookings.filter((b) => b.id !== body.booking.id);
+      const cancelId = body.booking?.id;
+      if (!cancelId) {
+        return new Response(JSON.stringify({ error: 'badRequest' }), { status: 400 });
+      }
+      updated = bookings.filter((b) => b.id !== cancelId);
       responseBody = { success: true };
     } else {
       return new Response(JSON.stringify({ error: 'unknownAction' }), { status: 400 });

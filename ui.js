@@ -430,7 +430,7 @@ async function _handleCancel(itemId, cell) {
   await prev;
 
   try {
-    await cancelBooking(itemId);
+    await cancelBooking(itemId, getName());
     addCancelledId(itemId);
     _bookings = _bookings.filter((b) => b.id !== itemId);
     _renderGrid(_days, _bookings);

@@ -7,13 +7,13 @@ export async function getBankHolidays() {
   if (_cache) return _cache;
   try {
     const res = await fetch('https://www.gov.uk/bank-holidays.json');
-    if (!res.ok) { _cache = new Map(); return _cache; }
+    if (!res.ok) { return new Map(); }
     const data = await res.json();
     _cache = new Map(
       (data['england-and-wales']?.events ?? []).map((e) => [e.date, e.title])
     );
   } catch {
-    _cache = new Map(); // graceful degradation — treat all days as normal
+    return new Map(); // graceful degradation — don't cache so next load retries
   }
   return _cache;
 }

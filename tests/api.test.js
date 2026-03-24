@@ -96,22 +96,22 @@ describe('bookSpace', () => {
 // ─── cancelBooking ─────────────────────────────────────────────────────────
 
 describe('cancelBooking', () => {
-  test('POSTs id and returns success', async () => {
+  test('POSTs id and name, returns success', async () => {
     mockFetch({ success: true });
-    const result = await cancelBooking('42');
+    const result = await cancelBooking('42', 'Alice');
     expect(result).toEqual({ success: true });
     expect(fetch).toHaveBeenCalledWith(
       '/api/cancel-booking',
       expect.objectContaining({
         method: 'POST',
-        body: JSON.stringify({ id: '42' }),
+        body: JSON.stringify({ id: '42', name: 'Alice' }),
       })
     );
   });
 
   test('throws on non-OK response', async () => {
     mockFetch({}, false);
-    await expect(cancelBooking('42')).rejects.toThrow('Flow error');
+    await expect(cancelBooking('42', 'Alice')).rejects.toThrow('Flow error');
   });
 });
 

@@ -31,8 +31,8 @@ export async function bookSpace(date, space, name) {
   return flowFetch('/api/book-space', { date, space, name });
 }
 
-export async function cancelBooking(id) {
-  return flowFetch('/api/cancel-booking', { id });
+export async function cancelBooking(id, name) {
+  return flowFetch('/api/cancel-booking', { id, name });
 }
 
 // Verifies the admin password without touching any blob.
