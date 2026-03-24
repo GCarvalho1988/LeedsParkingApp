@@ -338,6 +338,25 @@ function _buildLegend() {
 
 const _bookingInProgress = new Set(); // dates with an in-flight booking request
 
+// Polls get-bookings until the given booking ID appears in the blob, then syncs
+// _bookings with the authoritative server data. Retries up to 6 times (~3 s).
+async function _confirmBookingInBlob(bookingId) {
+  const startDate = toISODate(_days[0]);
+  const endDate   = toISODate(_days[_days.length - 1]);
+  for (let attempt = 0; attempt < 6; attempt++) {
+    await new Promise((r) => setTimeout(r, 500));
+    try {
+      const fresh = await getBookingsForWeek(startDate, endDate);
+      if (fresh.some((b) => b.id === bookingId)) {
+        _bookings = fresh;
+        _renderGrid(_days, _bookings);
+        return;
+      }
+    } catch { /* ignore poll errors */ }
+  }
+  // Blob still stale after 3 s — keep optimistic state, nothing to do
+}
+
 async function _handleBook(date, space, cell) {
   const dateStr = date; // date is already an ISO string (passed from _buildCell as dateStr)
 
@@ -368,8 +387,11 @@ async function _handleBook(date, space, cell) {
       _showCellMessage(cell, `Just taken by ${result.bookedBy} \u2014 try the other space`);
       cell.classList.remove('loading');
     } else {
+      // Optimistic update so the cell reacts immediately
       _bookings.push({ id: result.id, date: dateStr, space, bookedBy: getName() });
       _renderGrid(_days, _bookings);
+      // Read-after-write: poll until the blob reflects the new booking (max ~3 s)
+      _confirmBookingInBlob(result.id);
     }
   } catch {
     _showError('Could not complete booking. Please try again.');
@@ -507,7 +529,15 @@ function _showAdminOverlay() {
 
 // ─── Admin: panel shell ─────────────────────────────────────────────────────
 
+function _setMainContentVisible(visible) {
+  const display = visible ? '' : 'none';
+  if (_headerEl) _headerEl.style.display = display;
+  if (_errorEl) _errorEl.style.display = display;
+  if (_gridEl) _gridEl.style.display = display;
+}
+
 function _showAdminPanel() {
+  _setMainContentVisible(false);
   const app = document.getElementById('app');
 
   const panel = document.createElement('div');
@@ -526,6 +556,7 @@ function _showAdminPanel() {
   closeBtn.addEventListener('click', () => {
     _adminPassword = null;
     panel.remove();
+    _setMainContentVisible(true);
   });
   panelHeader.appendChild(title);
   panelHeader.appendChild(closeBtn);
