@@ -574,7 +574,13 @@ async function _renderEmployeesTab(container) {
       removeBtn.textContent = 'Remove';
       removeBtn.addEventListener('click', async () => {
         removeBtn.disabled = true;
-        const result = await adminRemoveEmployee(_adminPassword, name);
+        let result;
+        try {
+          result = await adminRemoveEmployee(_adminPassword, name);
+        } catch {
+          removeBtn.disabled = false;
+          return;
+        }
         if (result.error === 'unauthorized') {
           _adminPassword = null;
           container.innerHTML = '<p style="color:#dc2626;font-size:0.85rem;">Session expired. Please reload.</p>';
@@ -614,7 +620,13 @@ async function _renderEmployeesTab(container) {
     if (!name) return;
     addBtn.disabled = true;
     inlineMsg.textContent = '';
-    const result = await adminAddEmployee(_adminPassword, name);
+    let result;
+    try {
+      result = await adminAddEmployee(_adminPassword, name);
+    } catch {
+      addBtn.disabled = false;
+      return;
+    }
     if (result.error === 'unauthorized') {
       _adminPassword = null;
       container.innerHTML = '<p style="color:#dc2626;font-size:0.85rem;">Session expired. Please reload.</p>';
@@ -711,7 +723,13 @@ async function _renderBookingsTab(container) {
     submitBtn.disabled = true;
     formMsg.textContent = '';
     const booking = { date: dateInput.value, space: Number(spaceSelect.value), bookedBy: nameSelect.value };
-    const result = await adminBookSpace(_adminPassword, booking);
+    let result;
+    try {
+      result = await adminBookSpace(_adminPassword, booking);
+    } catch {
+      submitBtn.disabled = false;
+      return;
+    }
     if (result.error === 'unauthorized') {
       _adminPassword = null;
       container.innerHTML = '<p style="color:#dc2626;font-size:0.85rem;">Session expired. Please reload.</p>';
@@ -810,7 +828,13 @@ function _renderAdminGrid(gridEl, days, bookings, container) {
         cancelBtn.textContent = 'Cancel';
         cancelBtn.addEventListener('click', async () => {
           cancelBtn.disabled = true;
-          const result = await adminCancelBooking(_adminPassword, booking.id);
+          let result;
+          try {
+            result = await adminCancelBooking(_adminPassword, booking.id);
+          } catch {
+            cancelBtn.disabled = false;
+            return;
+          }
           if (result.error === 'unauthorized') {
             _adminPassword = null;
             container.innerHTML = '<p style="color:#dc2626;font-size:0.85rem;">Session expired. Please reload.</p>';
