@@ -84,10 +84,12 @@ Replaces all 4 existing Power Automate proxy functions. Two new admin functions 
 **Admin auth pattern** (same 2 lines at top of both admin functions):
 ```js
 if (body.password !== process.env.ADMIN_PASSWORD) {
-  return { status: 401, body: { error: 'unauthorized' } }
+  return { statusCode: 200, body: JSON.stringify({ error: 'unauthorized' }) }
 }
 // do NOT log body — contains password
 ```
+
+> **Why HTTP 200?** `flowFetch` throws on any non-OK response, so a 401 would throw rather than returning `{ error: 'unauthorized' }` to the caller. Returning 200 keeps error handling consistent with all other error responses (`alreadyBooked`, `taken`, etc.) which also return HTTP 200 with an error body.
 
 **`admin-employees.js` request body:**
 ```json
