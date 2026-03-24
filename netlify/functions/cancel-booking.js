@@ -1,9 +1,11 @@
-exports.handler = async (event) => {
-  const res = await fetch(process.env.FLOW_CANCEL_BOOKING, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: event.body,
-  });
-  const data = await res.json();
-  return { statusCode: res.status, body: JSON.stringify(data) };
+import { readBlob, writeBlob } from './_blob-helpers.js';
+
+export const handler = async (event) => {
+  const { id } = JSON.parse(event.body || '{}');
+  const bookings = await readBlob('bookings');
+  if (bookings === null) {
+    return { statusCode: 500, body: JSON.stringify({ error: 'storageError' }) };
+  }
+  await writeBlob('bookings', bookings.filter((b) => b.id !== id));
+  return { statusCode: 200, body: JSON.stringify({ success: true }) };
 };
