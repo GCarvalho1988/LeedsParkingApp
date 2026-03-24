@@ -636,3 +636,194 @@ async function _renderEmployeesTab(container) {
   container.appendChild(addRow);
   container.appendChild(inlineMsg);
 }
+
+// ─── Admin: bookings tab ────────────────────────────────────────────────────
+
+async function _renderBookingsTab(container) {
+  container.innerHTML = '<p style="font-size:0.85rem;color:var(--muted);padding:0.5rem 0;">Loading…</p>';
+
+  const days = bookableDays();
+  const startDate = toISODate(days[0]);
+  const endDate = toISODate(days[days.length - 1]);
+
+  let bookings, employees;
+  try {
+    [bookings, employees] = await Promise.all([
+      getBookingsForWeek(startDate, endDate),
+      getEmployees(),
+    ]);
+  } catch {
+    container.innerHTML = '<p style="font-size:0.85rem;color:#dc2626;">Could not load data.</p>';
+    return;
+  }
+
+  container.innerHTML = '';
+
+  // Add booking form
+  const form = document.createElement('div');
+  form.className = 'admin-booking-form';
+
+  const nameLabel = document.createElement('label');
+  nameLabel.textContent = 'Employee';
+  const nameSelect = document.createElement('select');
+  const namePlaceholder = document.createElement('option');
+  namePlaceholder.value = '';
+  namePlaceholder.textContent = '— Select —';
+  namePlaceholder.disabled = true;
+  namePlaceholder.selected = true;
+  nameSelect.appendChild(namePlaceholder);
+  employees.forEach((name) => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    nameSelect.appendChild(opt);
+  });
+
+  const dateLabel = document.createElement('label');
+  dateLabel.textContent = 'Date (YYYY-MM-DD)';
+  const dateInput = document.createElement('input');
+  dateInput.type = 'date';
+  dateInput.min = startDate;
+  dateInput.max = endDate;
+
+  const spaceLabel = document.createElement('label');
+  spaceLabel.textContent = 'Space';
+  const spaceSelect = document.createElement('select');
+  ['1', '2'].forEach((s) => {
+    const opt = document.createElement('option');
+    opt.value = s;
+    opt.textContent = `Space ${s}`;
+    spaceSelect.appendChild(opt);
+  });
+
+  const submitBtn = document.createElement('button');
+  submitBtn.className = 'admin-booking-submit';
+  submitBtn.textContent = 'Add booking';
+
+  const formMsg = document.createElement('div');
+  formMsg.className = 'admin-inline-msg';
+
+  submitBtn.addEventListener('click', async () => {
+    if (!nameSelect.value || !dateInput.value) {
+      formMsg.textContent = 'Select an employee and date.';
+      return;
+    }
+    submitBtn.disabled = true;
+    formMsg.textContent = '';
+    const booking = { date: dateInput.value, space: Number(spaceSelect.value), bookedBy: nameSelect.value };
+    const result = await adminBookSpace(_adminPassword, booking);
+    if (result.error === 'unauthorized') {
+      _adminPassword = null;
+      container.innerHTML = '<p style="color:#dc2626;font-size:0.85rem;">Session expired. Please reload.</p>';
+      return;
+    }
+    // Refresh tab
+    _renderBookingsTab(container);
+  });
+
+  nameLabel.appendChild(nameSelect);
+  dateLabel.appendChild(dateInput);
+  spaceLabel.appendChild(spaceSelect);
+  form.appendChild(nameLabel);
+  form.appendChild(dateLabel);
+  form.appendChild(spaceLabel);
+  form.appendChild(submitBtn);
+  form.appendChild(formMsg);
+  container.appendChild(form);
+
+  // Bookings grid (reuse existing _renderGrid logic but with admin cancel on every cell)
+  const gridEl = document.createElement('div');
+  gridEl.id = 'admin-week-grid';
+  container.appendChild(gridEl);
+  _renderAdminGrid(gridEl, days, bookings, container);
+}
+
+function _renderAdminGrid(gridEl, days, bookings, container) {
+  gridEl.innerHTML = '';
+
+  // Space header
+  const header = document.createElement('div');
+  header.className = 'week-grid-row space-header';
+  header.innerHTML = `
+    <div></div>
+    <div class="space-header-label">Space 1</div>
+    <div class="space-header-label">Space 2</div>
+  `;
+  gridEl.appendChild(header);
+
+  let lastWeekMonday = null;
+  for (const day of days) {
+    const monday = new Date(day);
+    monday.setDate(monday.getDate() - (monday.getDay() - 1));
+    monday.setHours(0, 0, 0, 0);
+    if (!lastWeekMonday || monday.getTime() !== lastWeekMonday.getTime()) {
+      lastWeekMonday = monday;
+      const weekLabel = document.createElement('div');
+      weekLabel.className = 'week-label';
+      const friday = new Date(monday);
+      friday.setDate(friday.getDate() + 4);
+      weekLabel.textContent = `${formatDay(monday)} – ${formatDay(friday)}`;
+      gridEl.appendChild(weekLabel);
+    }
+
+    const dateStr = toISODate(day);
+    const past = isPast(day);
+    const row = document.createElement('div');
+    row.className = 'week-grid-row day-row';
+
+    const dayLabel = document.createElement('div');
+    dayLabel.className = 'day-label';
+    const abbr = document.createElement('span');
+    abbr.className = 'day-abbr';
+    abbr.textContent = day.toLocaleDateString('en-GB', { weekday: 'short' });
+    const num = document.createElement('span');
+    num.className = 'day-num';
+    num.textContent = day.toLocaleDateString('en-GB', { day: 'numeric' });
+    dayLabel.appendChild(abbr);
+    dayLabel.appendChild(num);
+    row.appendChild(dayLabel);
+
+    for (const space of [1, 2]) {
+      const booking = bookings.find((b) => b.date === dateStr && b.space === space) ?? null;
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+
+      if (past || !booking) {
+        // Same as normal grid — past or free
+        cell.classList.add(past ? 'cell-past' : 'cell-free');
+        const stateEl = document.createElement('span');
+        stateEl.className = 'cell-state';
+        stateEl.textContent = past ? '—' : 'Free ✚';
+        const subEl = document.createElement('span');
+        subEl.className = 'cell-sub';
+        subEl.textContent = past ? 'Past' : 'Tap to book';
+        cell.appendChild(stateEl);
+        cell.appendChild(subEl);
+      } else {
+        // Booked — show name + admin cancel button
+        cell.classList.add('cell-taken');
+        const stateEl = document.createElement('span');
+        stateEl.className = 'cell-state';
+        stateEl.textContent = booking.bookedBy;
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'cell-admin-cancel';
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.addEventListener('click', async () => {
+          cancelBtn.disabled = true;
+          const result = await adminCancelBooking(_adminPassword, booking.id);
+          if (result.error === 'unauthorized') {
+            _adminPassword = null;
+            container.innerHTML = '<p style="color:#dc2626;font-size:0.85rem;">Session expired. Please reload.</p>';
+            return;
+          }
+          _renderBookingsTab(container);
+        });
+        cell.appendChild(stateEl);
+        cell.appendChild(cancelBtn);
+      }
+
+      row.appendChild(cell);
+    }
+    gridEl.appendChild(row);
+  }
+}
