@@ -1,6 +1,6 @@
 import { applyTheme, buildToggle } from './theme.js';
 import { getName } from './identity.js';
-import { renderIdentityOverlay, render } from './ui.js';
+import { renderIdentityOverlay, render, buildAdminLockIcon } from './ui.js';
 
 // Apply theme immediately — before any UI renders — to avoid flash of wrong theme
 applyTheme();
@@ -20,8 +20,9 @@ try {
   }
 }
 
-// Inject toggle into card header after DOM is ready
+// Inject theme toggle and admin lock icon into card header after DOM is ready
 const header = document.querySelector('.card-header');
 if (header) {
   header.appendChild(buildToggle());
+  header.appendChild(buildAdminLockIcon());
 }
