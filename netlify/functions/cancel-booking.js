@@ -1,11 +1,11 @@
 import { readBlob, writeBlob } from './_blob-helpers.js';
 
-export const handler = async (event) => {
-  const { id } = JSON.parse(event.body || '{}');
+export default async (req) => {
+  const { id } = await req.json();
   const bookings = await readBlob('bookings');
   if (bookings === null) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'storageError' }) };
+    return new Response(JSON.stringify({ error: 'storageError' }), { status: 500 });
   }
   await writeBlob('bookings', bookings.filter((b) => b.id !== id));
-  return { statusCode: 200, body: JSON.stringify({ success: true }) };
+  return new Response(JSON.stringify({ success: true }), { status: 200 });
 };

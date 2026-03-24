@@ -1,11 +1,11 @@
 import { readBlob } from './_blob-helpers.js';
 
-export const handler = async (event) => {
-  const { start, end } = JSON.parse(event.body || '{}');
+export default async (req) => {
+  const { start, end } = await req.json();
   const bookings = await readBlob('bookings');
   if (bookings === null) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'storageError' }) };
+    return new Response(JSON.stringify({ error: 'storageError' }), { status: 500 });
   }
   const filtered = bookings.filter((b) => b.date >= start && b.date <= end);
-  return { statusCode: 200, body: JSON.stringify(filtered) };
+  return new Response(JSON.stringify(filtered), { status: 200 });
 };
