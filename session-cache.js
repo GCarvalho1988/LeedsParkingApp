@@ -29,7 +29,7 @@ export function mergeWithSession(blobBookings) {
 
   const filtered = blobBookings.filter((b) => !cancelledIds.has(b.id));
   const blobIds = new Set(blobBookings.map((b) => b.id));
-  const stillPending = pending.filter((b) => !blobIds.has(b.id));
+  const stillPending = pending.filter((b) => !blobIds.has(b.id) && !cancelledIds.has(b.id));
 
   return [...filtered, ...stillPending];
 }
