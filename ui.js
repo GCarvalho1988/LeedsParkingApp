@@ -336,13 +336,20 @@ function _buildLegend() {
 
 // ─── Interactions ──────────────────────────────────────────────────────────
 
+const _bookingInProgress = new Set(); // dates with an in-flight booking request
+
 async function _handleBook(date, space, cell) {
-  // Client-side guard — prevents double-booking despite blob eventual consistency
   const dateStr = toISODate(date);
+
+  // Client-side guard — prevents double-booking despite blob eventual consistency
   if (_bookings.some((b) => b.date === dateStr && b.bookedBy === getName())) {
     _showCellMessage(cell, 'You already have a space booked this day');
     return;
   }
+
+  // Prevent two simultaneous booking requests for the same date (rapid double-click)
+  if (_bookingInProgress.has(dateStr)) return;
+  _bookingInProgress.add(dateStr);
 
   cell.classList.add('loading');
   _clearError();
@@ -350,7 +357,12 @@ async function _handleBook(date, space, cell) {
   try {
     const result = await bookSpace(date, space, getName());
     if (result.error === 'alreadyBooked') {
-      _showCellMessage(cell, 'You already have a space booked this day');
+      // If client agrees user is booked, show normal message.
+      // If client thinks slot is free, blob is stale — ask them to retry.
+      const clientAlsoSees = _bookings.some((b) => b.date === dateStr && b.bookedBy === getName());
+      _showCellMessage(cell, clientAlsoSees
+        ? 'You already have a space booked this day'
+        : 'Please wait a moment and try again');
       cell.classList.remove('loading');
     } else if (result.error === 'taken') {
       _showCellMessage(cell, `Just taken by ${result.bookedBy} \u2014 try the other space`);
@@ -362,6 +374,8 @@ async function _handleBook(date, space, cell) {
   } catch {
     _showError('Could not complete booking. Please try again.');
     cell.classList.remove('loading');
+  } finally {
+    _bookingInProgress.delete(dateStr);
   }
 }
 
