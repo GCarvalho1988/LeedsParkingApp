@@ -1,10 +1,9 @@
 import { bookableDays, isPast, toISODate, formatDay } from './dates.js';
-import { getBookingsForWeek, bookSpace, cancelBooking, getEmployees } from './api.js';
-import { getName, setName, clearName } from './identity.js';
 import {
-  adminAddEmployee, adminRemoveEmployee,
-  adminBookSpace, adminCancelBooking,
+  getBookingsForWeek, bookSpace, cancelBooking, getEmployees,
+  adminAddEmployee, adminRemoveEmployee, adminBookSpace, adminCancelBooking,
 } from './api.js';
+import { getName, setName, clearName } from './identity.js';
 
 let _headerEl = null;
 let _errorEl = null;
