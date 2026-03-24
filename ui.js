@@ -1,12 +1,17 @@
 import { bookableDays, isPast, toISODate, formatDay } from './dates.js';
 import { getBookingsForWeek, bookSpace, cancelBooking, getEmployees } from './api.js';
 import { getName, setName, clearName } from './identity.js';
+import {
+  adminAddEmployee, adminRemoveEmployee,
+  adminBookSpace, adminCancelBooking,
+} from './api.js';
 
 let _headerEl = null;
 let _errorEl = null;
 let _gridEl = null;
 let _days = null;
 let _bookings = null;
+let _adminPassword = null; // held in memory only — never persisted
 
 // ─── Identity overlay ───────────────────────────────────────────────────────
 
@@ -378,4 +383,104 @@ function _showCellMessage(cell, message) {
   } else {
     _showError(message);
   }
+}
+
+// ─── Admin: lock icon ───────────────────────────────────────────────────────
+
+/**
+ * Returns a lock button that, when clicked, shows the admin password overlay.
+ * Intended to be injected into the card header by app.js.
+ */
+export function buildAdminLockIcon() {
+  const btn = document.createElement('button');
+  btn.className = 'admin-lock-btn';
+  btn.title = 'Admin';
+  btn.textContent = '🔒';
+  btn.addEventListener('click', () => _showAdminOverlay());
+  return btn;
+}
+
+// ─── Admin: password overlay ────────────────────────────────────────────────
+
+function _showAdminOverlay() {
+  const overlay = document.createElement('div');
+  overlay.className = 'admin-overlay';
+
+  const box = document.createElement('div');
+  box.className = 'admin-overlay-box';
+
+  const heading = document.createElement('h2');
+  heading.textContent = 'Admin access';
+  box.appendChild(heading);
+
+  const input = document.createElement('input');
+  input.type = 'password';
+  input.className = 'admin-password-input';
+  input.placeholder = 'Password';
+  input.autocomplete = 'current-password';
+  box.appendChild(input);
+
+  const errMsg = document.createElement('div');
+  errMsg.className = 'admin-error-msg';
+  box.appendChild(errMsg);
+
+  const actions = document.createElement('div');
+  actions.className = 'admin-overlay-actions';
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'admin-btn-cancel';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.addEventListener('click', () => overlay.remove());
+
+  const unlockBtn = document.createElement('button');
+  unlockBtn.className = 'admin-btn-unlock';
+  unlockBtn.textContent = 'Unlock';
+  unlockBtn.disabled = true;
+
+  input.addEventListener('input', () => {
+    unlockBtn.disabled = !input.value.trim();
+    errMsg.textContent = '';
+    input.classList.remove('shake');
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !unlockBtn.disabled) unlockBtn.click();
+  });
+
+  unlockBtn.addEventListener('click', async () => {
+    unlockBtn.disabled = true;
+    const password = input.value.trim();
+
+    // Verify password by sending an empty name.
+    // Server returns { error: 'unauthorized' } (HTTP 200) for wrong password.
+    // Server returns { error: 'invalidName' } (HTTP 200) for correct password + empty name.
+    // flowFetch only throws on non-OK HTTP — both cases return 200, so no throw expected.
+    // Network failures are caught separately.
+    let test;
+    try {
+      test = await adminAddEmployee(password, '');
+    } catch {
+      errMsg.textContent = 'Could not connect. Try again.';
+      unlockBtn.disabled = false;
+      return;
+    }
+    if (test.error === 'unauthorized') {
+      input.value = '';
+      input.classList.add('shake');
+      errMsg.textContent = 'Incorrect password';
+      unlockBtn.disabled = false;
+      return;
+    }
+
+    _adminPassword = password;
+    overlay.remove();
+    _showAdminPanel();
+  });
+
+  actions.appendChild(cancelBtn);
+  actions.appendChild(unlockBtn);
+  box.appendChild(actions);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  input.focus();
 }
