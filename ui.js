@@ -337,6 +337,13 @@ function _buildLegend() {
 // ─── Interactions ──────────────────────────────────────────────────────────
 
 async function _handleBook(date, space, cell) {
+  // Client-side guard — prevents double-booking despite blob eventual consistency
+  const dateStr = toISODate(date);
+  if (_bookings.some((b) => b.date === dateStr && b.bookedBy === getName())) {
+    _showCellMessage(cell, 'You already have a space booked this day');
+    return;
+  }
+
   cell.classList.add('loading');
   _clearError();
 
@@ -349,7 +356,7 @@ async function _handleBook(date, space, cell) {
       _showCellMessage(cell, `Just taken by ${result.bookedBy} \u2014 try the other space`);
       cell.classList.remove('loading');
     } else {
-      _bookings.push({ id: result.id, date, space, bookedBy: getName() });
+      _bookings.push({ id: result.id, date: dateStr, space, bookedBy: getName() });
       _renderGrid(_days, _bookings);
     }
   } catch {
