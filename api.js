@@ -34,14 +34,18 @@ export async function cancelBooking(id) {
   return flowFetch('/api/cancel-booking', { id });
 }
 
-export async function adminAddEmployee(password, name) {
-  const result = await flowFetch('/api/admin-employees', { password, action: 'add', name });
+export async function adminAddEmployee(password, name, currentEmployees) {
+  // Dedup client-side — avoids a server round-trip and the read-modify-write race
+  if (currentEmployees.includes(name)) return { error: 'alreadyExists' };
+  const employees = [...currentEmployees, name].sort((a, b) => a.localeCompare(b));
+  const result = await flowFetch('/api/admin-employees', { password, action: 'set', employees });
   if (!result.error) clearEmployeeCache();
   return result;
 }
 
-export async function adminRemoveEmployee(password, name) {
-  const result = await flowFetch('/api/admin-employees', { password, action: 'remove', name });
+export async function adminRemoveEmployee(password, name, currentEmployees) {
+  const employees = currentEmployees.filter((e) => e !== name);
+  const result = await flowFetch('/api/admin-employees', { password, action: 'set', employees });
   if (!result.error) clearEmployeeCache();
   return result;
 }

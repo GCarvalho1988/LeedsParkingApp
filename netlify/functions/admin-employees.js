@@ -7,7 +7,16 @@ export default async (req) => {
     return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 200 });
   }
 
-  // Reject empty or whitespace-only names before any blob access
+  // set: client sends full array — no read needed, eliminates read-modify-write race
+  if (body.action === 'set') {
+    if (!Array.isArray(body.employees)) {
+      return new Response(JSON.stringify({ error: 'invalidPayload' }), { status: 200 });
+    }
+    await writeBlob('employees', body.employees);
+    return new Response(JSON.stringify({ success: true }), { status: 200 });
+  }
+
+  // add/remove still used by password verification (action: 'add', name: '')
   if (!body.name || !body.name.trim()) {
     return new Response(JSON.stringify({ error: 'invalidName' }), { status: 200 });
   }

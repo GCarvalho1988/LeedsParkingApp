@@ -563,7 +563,7 @@ async function _renderEmployeesTab(container) {
 
   function rebuildList(names) {
     list.innerHTML = '';
-    names.forEach((name) => {
+    [...names].sort((a, b) => a.localeCompare(b)).forEach((name) => {
       const item = document.createElement('li');
       item.className = 'admin-employee-item';
       const nameSpan = document.createElement('span');
@@ -575,7 +575,7 @@ async function _renderEmployeesTab(container) {
         removeBtn.disabled = true;
         let result;
         try {
-          result = await adminRemoveEmployee(_adminPassword, name);
+          result = await adminRemoveEmployee(_adminPassword, name, employees);
         } catch {
           removeBtn.disabled = false;
           return;
@@ -621,7 +621,7 @@ async function _renderEmployeesTab(container) {
     inlineMsg.textContent = '';
     let result;
     try {
-      result = await adminAddEmployee(_adminPassword, name);
+      result = await adminAddEmployee(_adminPassword, name, employees);
     } catch {
       addBtn.disabled = false;
       return;

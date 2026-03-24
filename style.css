@@ -549,6 +549,14 @@ body {
 [data-theme="dark"] .not-you-link { color: #8b949e; }
 [data-theme="dark"] .not-you-link:hover { color: #c9d1d9; }
 
+/* Admin panel — dark mode overrides for inputs/selects */
+[data-theme="dark"] .admin-password-input,
+[data-theme="dark"] .admin-add-input,
+[data-theme="dark"] .admin-booking-form select,
+[data-theme="dark"] .admin-booking-form input { background: #21262d; color: #c9d1d9; border-color: #30363d; }
+[data-theme="dark"] .admin-overlay-box { background: #161b22; }
+[data-theme="dark"] .admin-employee-item { border-color: #21262d; }
+
 /* System fallback — activates when no data-theme attribute is set */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
@@ -573,6 +581,12 @@ body {
   :root:not([data-theme]) .card-header-title { color: rgba(255, 255, 255, 0.9); }
   :root:not([data-theme]) .identity-submit { color: #ffffff; }
   :root:not([data-theme]) .day-num { color: #c9d1d9; }
+  :root:not([data-theme]) .admin-password-input,
+  :root:not([data-theme]) .admin-add-input,
+  :root:not([data-theme]) .admin-booking-form select,
+  :root:not([data-theme]) .admin-booking-form input { background: #21262d; color: #c9d1d9; border-color: #30363d; }
+  :root:not([data-theme]) .admin-overlay-box { background: #161b22; }
+  :root:not([data-theme]) .admin-employee-item { border-color: #21262d; }
   :root:not([data-theme]) .week-nav-btn { color: #8b949e; border-color: #30363d; }
   :root:not([data-theme]) .week-nav-btn:hover:not(:disabled) { background: #30363d; border-color: #58a6ff; color: #c9d1d9; }
   :root:not([data-theme]) .week-nav-btn:disabled { color: #484f58; }

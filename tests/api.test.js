@@ -127,42 +127,42 @@ const {
 } = await import('../api.js');
 
 describe('adminAddEmployee', () => {
-  test('POSTs add action with password and name', async () => {
+  test('POSTs set action with full sorted list including new name', async () => {
     mockFetch({ success: true });
-    const result = await adminAddEmployee('secret', 'Carol White');
+    const result = await adminAddEmployee('secret', 'Carol White', ['Alice Smith', 'Bob Jones']);
     expect(result).toEqual({ success: true });
     expect(fetch).toHaveBeenCalledWith(
       '/api/admin-employees',
       expect.objectContaining({
         method: 'POST',
-        body: JSON.stringify({ password: 'secret', action: 'add', name: 'Carol White' }),
+        body: JSON.stringify({ password: 'secret', action: 'set', employees: ['Alice Smith', 'Bob Jones', 'Carol White'] }),
       })
     );
   });
 
-  test('returns alreadyExists error without throwing', async () => {
-    mockFetch({ error: 'alreadyExists' });
-    const result = await adminAddEmployee('secret', 'Alice Smith');
+  test('returns alreadyExists without fetching when name already in list', async () => {
+    const result = await adminAddEmployee('secret', 'Alice Smith', ['Alice Smith', 'Bob Jones']);
     expect(result).toEqual({ error: 'alreadyExists' });
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   test('returns unauthorized on wrong password', async () => {
     mockFetch({ error: 'unauthorized' });
-    const result = await adminAddEmployee('wrong', 'Carol White');
+    const result = await adminAddEmployee('wrong', 'Carol White', []);
     expect(result).toEqual({ error: 'unauthorized' });
   });
 });
 
 describe('adminRemoveEmployee', () => {
-  test('POSTs remove action with password and name', async () => {
+  test('POSTs set action with name removed from list', async () => {
     mockFetch({ success: true });
-    const result = await adminRemoveEmployee('secret', 'Alice Smith');
+    const result = await adminRemoveEmployee('secret', 'Alice Smith', ['Alice Smith', 'Bob Jones']);
     expect(result).toEqual({ success: true });
     expect(fetch).toHaveBeenCalledWith(
       '/api/admin-employees',
       expect.objectContaining({
         method: 'POST',
-        body: JSON.stringify({ password: 'secret', action: 'remove', name: 'Alice Smith' }),
+        body: JSON.stringify({ password: 'secret', action: 'set', employees: ['Bob Jones'] }),
       })
     );
   });
