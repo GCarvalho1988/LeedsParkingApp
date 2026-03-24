@@ -1,7 +1,7 @@
 import { bookableDays, isPast, toISODate, formatDay } from './dates.js';
 import {
   getBookingsForWeek, bookSpace, cancelBooking, getEmployees,
-  adminAddEmployee, adminRemoveEmployee, adminBookSpace, adminCancelBooking,
+  adminVerifyPassword, adminAddEmployee, adminRemoveEmployee, adminBookSpace, adminCancelBooking,
 } from './api.js';
 import { getName, setName, clearName } from './identity.js';
 
@@ -478,7 +478,7 @@ function _showAdminOverlay() {
     // Network failures are caught separately.
     let test;
     try {
-      test = await adminAddEmployee(password, '', []);
+      test = await adminVerifyPassword(password);
     } catch {
       errMsg.textContent = 'Could not connect. Try again.';
       unlockBtn.disabled = false;

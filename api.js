@@ -35,6 +35,12 @@ export async function cancelBooking(id) {
   return flowFetch('/api/cancel-booking', { id });
 }
 
+// Verifies the admin password without touching any blob.
+// Uses action:'add' + empty name so the server hits the invalidName guard before any write.
+export async function adminVerifyPassword(password) {
+  return flowFetch('/api/admin-employees', { password, action: 'add', name: '' });
+}
+
 export async function adminAddEmployee(password, name, currentEmployees) {
   // Dedup client-side — avoids a server round-trip and the read-modify-write race
   if (currentEmployees.includes(name)) return { error: 'alreadyExists' };
