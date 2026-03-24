@@ -339,7 +339,7 @@ function _buildLegend() {
 const _bookingInProgress = new Set(); // dates with an in-flight booking request
 
 async function _handleBook(date, space, cell) {
-  const dateStr = toISODate(date);
+  const dateStr = date; // date is already an ISO string (passed from _buildCell as dateStr)
 
   // Client-side guard — prevents double-booking despite blob eventual consistency
   if (_bookings.some((b) => b.date === dateStr && b.bookedBy === getName())) {
