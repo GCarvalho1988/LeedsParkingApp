@@ -12,10 +12,13 @@ async function flowFetch(path, body = {}) {
 
 let _employeeCache = null;
 
+export function clearEmployeeCache() {
+  _employeeCache = null;
+}
+
 export async function getEmployees() {
   if (_employeeCache) return _employeeCache;
-  const data = await flowFetch('/api/get-employees');
-  _employeeCache = data.map((e) => Object.values(e)[0]);
+  _employeeCache = await flowFetch('/api/get-employees');
   return _employeeCache;
 }
 

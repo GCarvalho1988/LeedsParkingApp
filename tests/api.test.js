@@ -1,14 +1,6 @@
 import { jest } from '@jest/globals';
 
-// Mock config.js with known test URLs — must come before dynamic import
-jest.unstable_mockModule('../config.js', () => ({
-  FLOW_GET_EMPLOYEES:  'https://test.example/employees',
-  FLOW_GET_BOOKINGS:   'https://test.example/bookings',
-  FLOW_BOOK_SPACE:     'https://test.example/book',
-  FLOW_CANCEL_BOOKING: 'https://test.example/cancel',
-}));
-
-const { getEmployees, getBookingsForWeek, bookSpace, cancelBooking } = await import('../api.js');
+const { getEmployees, getBookingsForWeek, bookSpace, cancelBooking, clearEmployeeCache } = await import('../api.js');
 
 // Helper: mock a single fetch response
 function mockFetch(body, ok = true) {
@@ -25,13 +17,15 @@ beforeEach(() => jest.clearAllMocks());
 // ─── getEmployees ──────────────────────────────────────────────────────────
 
 describe('getEmployees', () => {
-  test('returns the employee name array from the flow', async () => {
-    mockFetch([{ '': 'Alice Smith' }, { '': 'Bob Jones' }]);
+  beforeEach(() => clearEmployeeCache()); // isolate cache between tests
+
+  test('returns plain string array from the endpoint', async () => {
+    mockFetch(['Alice Smith', 'Bob Jones']);
     const result = await getEmployees();
     expect(result).toEqual(['Alice Smith', 'Bob Jones']);
     expect(fetch).toHaveBeenCalledWith(
-      'https://test.example/employees',
-      expect.objectContaining({ headers: expect.any(Object) })
+      '/api/get-employees',
+      expect.objectContaining({ method: 'POST' })
     );
   });
 
@@ -44,18 +38,21 @@ describe('getEmployees', () => {
 // ─── getBookingsForWeek ────────────────────────────────────────────────────
 
 describe('getBookingsForWeek', () => {
-  test('appends start/end query params and returns bookings array', async () => {
+  test('POSTs start/end in body and returns bookings array', async () => {
     const data = [{ id: '1', date: '2026-03-24', space: 1, bookedBy: 'Alice Smith' }];
     mockFetch(data);
     const result = await getBookingsForWeek('2026-03-24', '2026-03-28');
     expect(result).toEqual(data);
     expect(fetch).toHaveBeenCalledWith(
-      'https://test.example/bookings?start=2026-03-24&end=2026-03-28',
-      expect.any(Object)
+      '/api/get-bookings',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ start: '2026-03-24', end: '2026-03-28' }),
+      })
     );
   });
 
-  test('returns empty array when flow returns []', async () => {
+  test('returns empty array when endpoint returns []', async () => {
     mockFetch([]);
     const result = await getBookingsForWeek('2026-03-24', '2026-03-28');
     expect(result).toEqual([]);
@@ -65,12 +62,12 @@ describe('getBookingsForWeek', () => {
 // ─── bookSpace ─────────────────────────────────────────────────────────────
 
 describe('bookSpace', () => {
-  test('POSTs date, space, name and returns success', async () => {
-    mockFetch({ success: true });
+  test('POSTs date, space, name and returns id on success', async () => {
+    mockFetch({ id: 'uuid-123' });
     const result = await bookSpace('2026-03-24', 1, 'Alice Smith');
-    expect(result).toEqual({ success: true });
+    expect(result).toEqual({ id: 'uuid-123' });
     expect(fetch).toHaveBeenCalledWith(
-      'https://test.example/book',
+      '/api/book-space',
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({ date: '2026-03-24', space: 1, name: 'Alice Smith' }),
@@ -78,13 +75,13 @@ describe('bookSpace', () => {
     );
   });
 
-  test('returns alreadyBooked error from flow', async () => {
+  test('returns alreadyBooked error', async () => {
     mockFetch({ error: 'alreadyBooked' });
     const result = await bookSpace('2026-03-24', 1, 'Alice Smith');
     expect(result).toEqual({ error: 'alreadyBooked' });
   });
 
-  test('returns taken error with bookedBy from flow', async () => {
+  test('returns taken error with bookedBy', async () => {
     mockFetch({ error: 'taken', bookedBy: 'Bob Jones' });
     const result = await bookSpace('2026-03-24', 1, 'Alice Smith');
     expect(result).toEqual({ error: 'taken', bookedBy: 'Bob Jones' });
@@ -104,7 +101,7 @@ describe('cancelBooking', () => {
     const result = await cancelBooking('42');
     expect(result).toEqual({ success: true });
     expect(fetch).toHaveBeenCalledWith(
-      'https://test.example/cancel',
+      '/api/cancel-booking',
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({ id: '42' }),
