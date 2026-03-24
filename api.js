@@ -33,3 +33,23 @@ export async function bookSpace(date, space, name) {
 export async function cancelBooking(id) {
   return flowFetch('/api/cancel-booking', { id });
 }
+
+export async function adminAddEmployee(password, name) {
+  const result = await flowFetch('/api/admin-employees', { password, action: 'add', name });
+  if (!result.error) clearEmployeeCache();
+  return result;
+}
+
+export async function adminRemoveEmployee(password, name) {
+  const result = await flowFetch('/api/admin-employees', { password, action: 'remove', name });
+  if (!result.error) clearEmployeeCache();
+  return result;
+}
+
+export async function adminBookSpace(password, booking) {
+  return flowFetch('/api/admin-bookings', { password, action: 'add', booking });
+}
+
+export async function adminCancelBooking(password, id) {
+  return flowFetch('/api/admin-bookings', { password, action: 'cancel', booking: { id } });
+}

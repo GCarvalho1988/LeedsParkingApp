@@ -114,3 +114,107 @@ describe('cancelBooking', () => {
     await expect(cancelBooking('42')).rejects.toThrow('Flow error');
   });
 });
+
+// ─── Admin functions ───────────────────────────────────────────────────────
+// ESM modules are cached — a second import('../api.js') returns the same instance.
+// All admin functions are destructured from the same import at the top of this file.
+
+const {
+  adminAddEmployee,
+  adminRemoveEmployee,
+  adminBookSpace,
+  adminCancelBooking,
+} = await import('../api.js');
+
+describe('adminAddEmployee', () => {
+  test('POSTs add action with password and name', async () => {
+    mockFetch({ success: true });
+    const result = await adminAddEmployee('secret', 'Carol White');
+    expect(result).toEqual({ success: true });
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/admin-employees',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ password: 'secret', action: 'add', name: 'Carol White' }),
+      })
+    );
+  });
+
+  test('returns alreadyExists error without throwing', async () => {
+    mockFetch({ error: 'alreadyExists' });
+    const result = await adminAddEmployee('secret', 'Alice Smith');
+    expect(result).toEqual({ error: 'alreadyExists' });
+  });
+
+  test('returns unauthorized on wrong password', async () => {
+    mockFetch({ error: 'unauthorized' });
+    const result = await adminAddEmployee('wrong', 'Carol White');
+    expect(result).toEqual({ error: 'unauthorized' });
+  });
+});
+
+describe('adminRemoveEmployee', () => {
+  test('POSTs remove action with password and name', async () => {
+    mockFetch({ success: true });
+    const result = await adminRemoveEmployee('secret', 'Alice Smith');
+    expect(result).toEqual({ success: true });
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/admin-employees',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ password: 'secret', action: 'remove', name: 'Alice Smith' }),
+      })
+    );
+  });
+});
+
+describe('adminBookSpace', () => {
+  test('POSTs add action with booking object', async () => {
+    mockFetch({ id: 'new-uuid' });
+    const booking = { date: '2026-03-24', space: 1, bookedBy: 'Alice Smith' };
+    const result = await adminBookSpace('secret', booking);
+    expect(result).toEqual({ id: 'new-uuid' });
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/admin-bookings',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ password: 'secret', action: 'add', booking }),
+      })
+    );
+  });
+});
+
+describe('adminCancelBooking', () => {
+  test('POSTs cancel action with booking id', async () => {
+    mockFetch({ success: true });
+    const result = await adminCancelBooking('secret', 'uuid-42');
+    expect(result).toEqual({ success: true });
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/admin-bookings',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ password: 'secret', action: 'cancel', booking: { id: 'uuid-42' } }),
+      })
+    );
+  });
+});
+
+describe('clearEmployeeCache', () => {
+  test('forces getEmployees to re-fetch on next call', async () => {
+    // Set up a single mock that returns two different responses
+    global.fetch = jest.fn()
+      .mockResolvedValueOnce({ ok: true, status: 200, statusText: 'OK', json: async () => ['Alice Smith'] })
+      .mockResolvedValueOnce({ ok: true, status: 200, statusText: 'OK', json: async () => ['Alice Smith', 'Carol White'] });
+
+    // Ensure cache is empty before this test
+    clearEmployeeCache();
+    // First call — populate cache
+    await getEmployees();
+    // Clear cache
+    clearEmployeeCache();
+    // Second call — must fetch again
+    const result = await getEmployees();
+    expect(result).toEqual(['Alice Smith', 'Carol White']);
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+});
