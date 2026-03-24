@@ -585,9 +585,9 @@ async function _renderEmployeesTab(container) {
           container.innerHTML = '<p style="color:#dc2626;font-size:0.85rem;">Session expired. Please reload.</p>';
           return;
         }
-        // Re-render with updated list
-        const updated = await getEmployees();
-        rebuildList(updated);
+        // Update local array directly — avoids eventual-consistency lag on re-fetch
+        employees.splice(employees.indexOf(name), 1);
+        rebuildList(employees);
       });
       item.appendChild(nameSpan);
       item.appendChild(removeBtn);
@@ -638,8 +638,9 @@ async function _renderEmployeesTab(container) {
     }
     addInput.value = '';
     addBtn.disabled = true;
-    const updated = await getEmployees();
-    rebuildList(updated);
+    // Update local array directly — avoids eventual-consistency lag on re-fetch
+    employees.push(name);
+    rebuildList(employees);
   });
 
   addRow.appendChild(addInput);
