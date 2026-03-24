@@ -457,7 +457,7 @@ function _showAdminOverlay() {
     // Network failures are caught separately.
     let test;
     try {
-      test = await adminAddEmployee(password, '');
+      test = await adminAddEmployee(password, '', []);
     } catch {
       errMsg.textContent = 'Could not connect. Try again.';
       unlockBtn.disabled = false;
