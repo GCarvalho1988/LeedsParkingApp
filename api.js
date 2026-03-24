@@ -18,7 +18,8 @@ export function clearEmployeeCache() {
 
 export async function getEmployees() {
   if (_employeeCache) return _employeeCache;
-  _employeeCache = await flowFetch('/api/get-employees');
+  const data = await flowFetch('/api/get-employees');
+  _employeeCache = [...data].sort((a, b) => a.localeCompare(b));
   return _employeeCache;
 }
 
