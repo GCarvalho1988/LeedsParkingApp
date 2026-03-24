@@ -1,4 +1,6 @@
-import { readBlob, writeBlob } from './_blob-helpers.js';
+import { readBlobWithEtag, writeBlobConditional } from './_blob-helpers.js';
+
+const MAX_RETRIES = 5;
 
 export default async (req) => {
   const body = await req.json();
@@ -7,22 +9,33 @@ export default async (req) => {
     return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 200 });
   }
 
-  const bookings = await readBlob('bookings');
-  if (bookings === null) {
-    return new Response(JSON.stringify({ error: 'storageError' }), { status: 500 });
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    const { data: bookings, etag } = await readBlobWithEtag('bookings');
+    if (bookings === null) {
+      return new Response(JSON.stringify({ error: 'storageError' }), { status: 500 });
+    }
+
+    let updated;
+    let responseBody;
+
+    if (body.action === 'add') {
+      const id = crypto.randomUUID();
+      updated = [...bookings, { id, ...body.booking }];
+      responseBody = { id };
+    } else if (body.action === 'cancel') {
+      updated = bookings.filter((b) => b.id !== body.booking.id);
+      responseBody = { success: true };
+    } else {
+      return new Response(JSON.stringify({ error: 'unknownAction' }), { status: 400 });
+    }
+
+    try {
+      await writeBlobConditional('bookings', updated, etag);
+      return new Response(JSON.stringify(responseBody), { status: 200 });
+    } catch {
+      // ETag mismatch — retry
+    }
   }
 
-  if (body.action === 'add') {
-    const id = crypto.randomUUID();
-    bookings.push({ id, ...body.booking });
-    await writeBlob('bookings', bookings);
-    return new Response(JSON.stringify({ id }), { status: 200 });
-  }
-
-  if (body.action === 'cancel') {
-    await writeBlob('bookings', bookings.filter((b) => b.id !== body.booking.id));
-    return new Response(JSON.stringify({ success: true }), { status: 200 });
-  }
-
-  return new Response(JSON.stringify({ error: 'unknownAction' }), { status: 400 });
+  return new Response(JSON.stringify({ error: 'conflict' }), { status: 200 });
 };

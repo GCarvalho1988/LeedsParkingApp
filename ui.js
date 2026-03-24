@@ -357,6 +357,10 @@ function _buildLegend() {
 
 const _bookingInProgress = new Set(); // dates with an in-flight booking request
 
+// Global mutex — ensures booking and cancel requests are sent one at a time so
+// that rapid clicks from a single user never produce concurrent blob writes.
+let _bookingMutex = Promise.resolve();
+
 // Polls get-bookings until the given booking ID appears in the blob, then syncs
 // _bookings with the authoritative server data. Retries up to 6 times (~3 s).
 async function _confirmBookingInBlob(bookingId) {
@@ -392,6 +396,14 @@ async function _handleBook(date, space, cell) {
   cell.classList.add('loading');
   _clearError();
 
+  // Acquire the global mutex so concurrent clicks from this user are serialised.
+  // Each booking waits for the previous HTTP request to complete before firing,
+  // preventing concurrent blob writes that cause lost-update races.
+  let release;
+  const prev = _bookingMutex;
+  _bookingMutex = new Promise((r) => { release = r; });
+  await prev;
+
   try {
     const result = await bookSpace(date, space, getName());
     if (result.error === 'alreadyBooked') {
@@ -417,12 +429,18 @@ async function _handleBook(date, space, cell) {
     cell.classList.remove('loading');
   } finally {
     _bookingInProgress.delete(dateStr);
+    release(); // release mutex for the next queued booking
   }
 }
 
 async function _handleCancel(itemId, cell) {
   cell.classList.add('loading');
   _clearError();
+
+  let release;
+  const prev = _bookingMutex;
+  _bookingMutex = new Promise((r) => { release = r; });
+  await prev;
 
   try {
     await cancelBooking(itemId);
@@ -431,6 +449,8 @@ async function _handleCancel(itemId, cell) {
   } catch {
     _showError('Could not cancel booking. Please try again.');
     cell.classList.remove('loading');
+  } finally {
+    release();
   }
 }
 

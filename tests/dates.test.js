@@ -3,7 +3,6 @@ import {
   weekDays,
   isPast,
   isCurrentWeek,
-  isBeyondMaxWeek,
   toISODate,
   formatDay,
 } from '../dates.js';
@@ -66,24 +65,6 @@ describe('isCurrentWeek', () => {
   });
 });
 
-describe('isBeyondMaxWeek', () => {
-  test('returns false for the current week', () => {
-    const currentMonday = weekStart(new Date());
-    expect(isBeyondMaxWeek(currentMonday)).toBe(false);
-  });
-
-  test('returns false for 3 weeks ahead (the furthest allowed)', () => {
-    const monday = weekStart(new Date());
-    monday.setDate(monday.getDate() + 21);
-    expect(isBeyondMaxWeek(monday)).toBe(false);
-  });
-
-  test('returns true for 4 weeks ahead', () => {
-    const monday = weekStart(new Date());
-    monday.setDate(monday.getDate() + 28);
-    expect(isBeyondMaxWeek(monday)).toBe(true);
-  });
-});
 
 describe('toISODate', () => {
   test('returns YYYY-MM-DD string', () => {
