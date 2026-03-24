@@ -179,4 +179,4 @@ Password is held in memory only — never stored in `localStorage`. Closing or r
 
 1. Add `ADMIN_PASSWORD` env var in Netlify dashboard
 2. Remove old `FLOW_*` env vars from Netlify dashboard
-3. Fresh deploy — existing SharePoint bookings manually re-entered via admin panel (clean cut-over agreed)
+3. Fresh deploy — clean cut-over, no booking data to migrate
