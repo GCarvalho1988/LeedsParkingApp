@@ -1,4 +1,5 @@
 import { bookableDays, isPast, toISODate, formatDay } from './dates.js';
+import { getBankHolidays } from './bank-holidays.js';
 import {
   getBookingsForWeek, bookSpace, cancelBooking, getEmployees,
   adminVerifyPassword, adminAddEmployee, adminRemoveEmployee, adminBookSpace, adminCancelBooking,
@@ -10,6 +11,7 @@ let _errorEl = null;
 let _gridEl = null;
 let _days = null;
 let _bookings = null;
+let _bankHolidays = new Map(); // Map<dateStr, holidayName>
 let _adminPassword = null; // held in memory only — never persisted
 
 // ─── Identity overlay ───────────────────────────────────────────────────────
@@ -190,7 +192,10 @@ async function _loadAndRenderAll() {
   _clearError();
 
   try {
-    _bookings = await getBookingsForWeek(startDate, endDate);
+    [_bookings, _bankHolidays] = await Promise.all([
+      getBookingsForWeek(startDate, endDate),
+      getBankHolidays(),
+    ]);
     _renderGrid(_days, _bookings);
   } catch {
     _showError('Could not load bookings. Check your connection and try again.');
@@ -248,11 +253,12 @@ function _renderGrid(days, bookings) {
     dayLabel.appendChild(num);
     row.appendChild(dayLabel);
 
+    const holidayName = _bankHolidays.get(dateStr) ?? null;
     for (const space of [1, 2]) {
       const booking = bookings.find(
         (b) => b.date === dateStr && b.space === space
       ) ?? null;
-      row.appendChild(_buildCell(dateStr, space, booking, currentName, past));
+      row.appendChild(_buildCell(dateStr, space, booking, currentName, past, holidayName));
     }
 
     _gridEl.appendChild(row);
@@ -262,7 +268,7 @@ function _renderGrid(days, bookings) {
   _gridEl.appendChild(_buildLegend());
 }
 
-function _buildCell(date, space, booking, currentName, past) {
+function _buildCell(date, space, booking, currentName, past, holidayName = null) {
   const cell = document.createElement('div');
   cell.className = 'cell';
   cell.setAttribute('aria-label', `Space ${space}`);
@@ -277,6 +283,15 @@ function _buildCell(date, space, booking, currentName, past) {
     cell.classList.add('cell-past');
     stateEl.textContent = '\u2014';
     subEl.textContent = 'Past';
+    cell.appendChild(stateEl);
+    cell.appendChild(subEl);
+    return cell;
+  }
+
+  if (holidayName) {
+    cell.classList.add('cell-holiday');
+    stateEl.textContent = holidayName;
+    subEl.textContent = 'Bank holiday';
     cell.appendChild(stateEl);
     cell.appendChild(subEl);
     return cell;
@@ -329,6 +344,10 @@ function _buildLegend() {
     <div class="legend-item">
       <div class="legend-dot" style="background:#f3f4f6;border-color:#e5e7eb;"></div>
       Past
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#eff6ff;border-color:#93c5fd;"></div>
+      Bank holiday
     </div>
   `;
   return legend;
