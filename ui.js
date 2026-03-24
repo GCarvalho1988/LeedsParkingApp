@@ -484,3 +484,155 @@ function _showAdminOverlay() {
   document.body.appendChild(overlay);
   input.focus();
 }
+
+// ─── Admin: panel shell ─────────────────────────────────────────────────────
+
+function _showAdminPanel() {
+  const app = document.getElementById('app');
+
+  const panel = document.createElement('div');
+  panel.className = 'admin-panel';
+  panel.id = 'admin-panel';
+
+  // Header row
+  const panelHeader = document.createElement('div');
+  panelHeader.className = 'admin-panel-header';
+  const title = document.createElement('span');
+  title.className = 'admin-panel-title';
+  title.textContent = 'Admin';
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'admin-close-btn';
+  closeBtn.textContent = '✕ Exit admin';
+  closeBtn.addEventListener('click', () => {
+    _adminPassword = null;
+    panel.remove();
+  });
+  panelHeader.appendChild(title);
+  panelHeader.appendChild(closeBtn);
+  panel.appendChild(panelHeader);
+
+  // Tab bar
+  const tabBar = document.createElement('div');
+  tabBar.className = 'admin-tabs';
+  const tabEmployees = document.createElement('button');
+  tabEmployees.className = 'admin-tab-btn active';
+  tabEmployees.textContent = 'Employees';
+  const tabBookings = document.createElement('button');
+  tabBookings.className = 'admin-tab-btn';
+  tabBookings.textContent = 'Bookings';
+  tabBar.appendChild(tabEmployees);
+  tabBar.appendChild(tabBookings);
+  panel.appendChild(tabBar);
+
+  // Content area
+  const content = document.createElement('div');
+  content.id = 'admin-tab-content';
+  panel.appendChild(content);
+
+  function showTab(name) {
+    tabEmployees.classList.toggle('active', name === 'employees');
+    tabBookings.classList.toggle('active', name === 'bookings');
+    if (name === 'employees') _renderEmployeesTab(content);
+    else _renderBookingsTab(content);
+  }
+
+  tabEmployees.addEventListener('click', () => showTab('employees'));
+  tabBookings.addEventListener('click', () => showTab('bookings'));
+
+  app.appendChild(panel);
+  showTab('employees');
+}
+
+// ─── Admin: employees tab ───────────────────────────────────────────────────
+
+async function _renderEmployeesTab(container) {
+  container.innerHTML = '<p style="font-size:0.85rem;color:var(--muted);padding:0.5rem 0;">Loading…</p>';
+
+  let employees;
+  try {
+    employees = await getEmployees();
+  } catch {
+    container.innerHTML = '<p style="font-size:0.85rem;color:#dc2626;">Could not load employees.</p>';
+    return;
+  }
+
+  container.innerHTML = '';
+
+  // Employee list
+  const list = document.createElement('ul');
+  list.className = 'admin-employee-list';
+
+  function rebuildList(names) {
+    list.innerHTML = '';
+    names.forEach((name) => {
+      const item = document.createElement('li');
+      item.className = 'admin-employee-item';
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = name;
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'admin-remove-btn';
+      removeBtn.textContent = 'Remove';
+      removeBtn.addEventListener('click', async () => {
+        removeBtn.disabled = true;
+        const result = await adminRemoveEmployee(_adminPassword, name);
+        if (result.error === 'unauthorized') {
+          _adminPassword = null;
+          container.innerHTML = '<p style="color:#dc2626;font-size:0.85rem;">Session expired. Please reload.</p>';
+          return;
+        }
+        // Re-render with updated list
+        const updated = await getEmployees();
+        rebuildList(updated);
+      });
+      item.appendChild(nameSpan);
+      item.appendChild(removeBtn);
+      list.appendChild(item);
+    });
+  }
+
+  rebuildList(employees);
+  container.appendChild(list);
+
+  // Add employee row
+  const addRow = document.createElement('div');
+  addRow.className = 'admin-add-row';
+  const addInput = document.createElement('input');
+  addInput.type = 'text';
+  addInput.className = 'admin-add-input';
+  addInput.placeholder = 'Full name';
+  const addBtn = document.createElement('button');
+  addBtn.className = 'admin-add-btn';
+  addBtn.textContent = 'Add';
+  addBtn.disabled = true;
+  addInput.addEventListener('input', () => { addBtn.disabled = !addInput.value.trim(); });
+
+  const inlineMsg = document.createElement('div');
+  inlineMsg.className = 'admin-inline-msg';
+
+  addBtn.addEventListener('click', async () => {
+    const name = addInput.value.trim();
+    if (!name) return;
+    addBtn.disabled = true;
+    inlineMsg.textContent = '';
+    const result = await adminAddEmployee(_adminPassword, name);
+    if (result.error === 'unauthorized') {
+      _adminPassword = null;
+      container.innerHTML = '<p style="color:#dc2626;font-size:0.85rem;">Session expired. Please reload.</p>';
+      return;
+    }
+    if (result.error === 'alreadyExists') {
+      inlineMsg.textContent = `"${name}" is already in the list.`;
+      addBtn.disabled = false;
+      return;
+    }
+    addInput.value = '';
+    addBtn.disabled = true;
+    const updated = await getEmployees();
+    rebuildList(updated);
+  });
+
+  addRow.appendChild(addInput);
+  addRow.appendChild(addBtn);
+  container.appendChild(addRow);
+  container.appendChild(inlineMsg);
+}
