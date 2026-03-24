@@ -625,3 +625,262 @@ body {
   background: rgba(255, 255, 255, 0.25);
   color: #fff;
 }
+
+/* ── Admin lock icon ─────────────────────────────────────────────────────── */
+.admin-lock-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  color: rgba(255,255,255,0.5);
+  font-size: 0.85rem;
+  line-height: 1;
+  position: absolute;
+  bottom: 0.75rem;
+  right: 0.75rem;
+  transition: color 0.15s;
+}
+.admin-lock-btn:hover { color: rgba(255,255,255,0.9); }
+
+/* ── Admin password overlay ──────────────────────────────────────────────── */
+.admin-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.admin-overlay-box {
+  background: var(--white);
+  border-radius: 4px;
+  padding: 1.75rem 2rem;
+  width: min(340px, 90vw);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.admin-overlay-box h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--body);
+}
+.admin-password-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+.admin-password-input:focus {
+  outline: 2px solid var(--s-cyan);
+  outline-offset: 1px;
+}
+.admin-password-input.shake {
+  animation: shake 0.35s ease;
+  border-color: #ef4444;
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-6px); }
+  40%       { transform: translateX(6px); }
+  60%       { transform: translateX(-4px); }
+  80%       { transform: translateX(4px); }
+}
+.admin-error-msg {
+  font-size: 0.8rem;
+  color: #dc2626;
+  min-height: 1rem;
+}
+.admin-overlay-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+.admin-btn-cancel {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: var(--muted);
+}
+.admin-btn-unlock {
+  padding: 0.4rem 0.9rem;
+  border: none;
+  border-radius: 3px;
+  background: var(--s-navy);
+  color: var(--white);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+.admin-btn-unlock:disabled { opacity: 0.5; cursor: default; }
+
+/* ── Admin panel ─────────────────────────────────────────────────────────── */
+.admin-panel {
+  padding: 0 1.25rem 1.5rem;
+}
+.admin-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0 0.5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.75rem;
+}
+.admin-panel-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+.admin-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--muted);
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+}
+.admin-close-btn:hover { color: var(--body); }
+
+/* Tabs */
+.admin-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 1rem;
+}
+.admin-tab-btn {
+  background: none;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+.admin-tab-btn.active {
+  color: var(--s-navy);
+  border-bottom-color: var(--s-navy);
+  font-weight: 600;
+}
+
+/* Employees tab */
+.admin-employee-list {
+  list-style: none;
+  margin-bottom: 1rem;
+}
+.admin-employee-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--s-palest);
+  font-size: 0.875rem;
+}
+.admin-remove-btn {
+  background: none;
+  border: 1px solid #fca5a5;
+  color: #dc2626;
+  border-radius: 3px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+.admin-remove-btn:hover { background: #fef2f2; }
+.admin-remove-btn:disabled { opacity: 0.4; cursor: default; }
+.admin-add-row {
+  display: flex;
+  gap: 0.5rem;
+}
+.admin-add-input {
+  flex: 1;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+.admin-add-btn {
+  padding: 0.4rem 0.75rem;
+  background: var(--s-navy);
+  color: var(--white);
+  border: none;
+  border-radius: 3px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+.admin-add-btn:disabled { opacity: 0.5; cursor: default; }
+.admin-inline-msg {
+  font-size: 0.78rem;
+  color: #dc2626;
+  margin-top: 0.35rem;
+  min-height: 1rem;
+}
+
+/* Bookings tab */
+.admin-booking-form {
+  background: var(--s-palest);
+  border-radius: 3px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.admin-booking-form label {
+  font-size: 0.78rem;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 0.15rem;
+}
+.admin-booking-form select,
+.admin-booking-form input {
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  background: var(--white);
+}
+.admin-booking-submit {
+  padding: 0.4rem 0.75rem;
+  background: var(--s-navy);
+  color: var(--white);
+  border: none;
+  border-radius: 3px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+  align-self: flex-end;
+}
+.admin-booking-submit:disabled { opacity: 0.5; cursor: default; }
+
+/* Admin grid — same as main grid but with cancel on all taken cells */
+.cell-admin-cancel {
+  display: block;
+  margin-top: 0.2rem;
+  background: none;
+  border: 1px solid #fca5a5;
+  color: #dc2626;
+  border-radius: 3px;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.7rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cell-admin-cancel:hover { background: #fef2f2; }
+.cell-admin-cancel:disabled { opacity: 0.4; cursor: default; }
