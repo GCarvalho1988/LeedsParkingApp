@@ -21,8 +21,12 @@ describe('parseRow', () => {
     expect(() => parseRow({ DATE: '2025-10-01' })).toThrow()
   })
 
-  it('excludes positive amounts (income/refunds)', () => {
-    expect(() => parseRow({ DATE: '2025-10-01', DESCRIPTION: 'Refund', AMOUNT: '10.00', CATEGORY: 'Income' })).toThrow()
+  it('excludes positive amounts', () => {
+    expect(() => parseRow({ DATE: '2025-10-01', DESCRIPTION: 'Refund', AMOUNT: '10.00', CATEGORY: 'Income' })).toThrow('income/refund')
+  })
+
+  it('excludes zero-amount rows', () => {
+    expect(() => parseRow({ DATE: '2025-10-01', DESCRIPTION: 'Free', AMOUNT: '0.00', CATEGORY: 'Other' })).toThrow('zero-amount')
   })
 })
 
