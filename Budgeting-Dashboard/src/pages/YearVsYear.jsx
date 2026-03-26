@@ -7,6 +7,24 @@ function formatGBP(n) {
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
+function DeltaCell({ delta }) {
+  if (delta === null) return <td className="px-5 py-2.5 text-right text-[#35211A]">—</td>
+  return (
+    <td className={`px-5 py-2.5 text-right font-medium ${delta > 0 ? 'text-[#DC9F85]' : 'text-[#B6A596]'}`}>
+      {delta > 0 ? '+' : ''}{delta}%
+    </td>
+  )
+}
+
+const TH = ({ children, right }) => (
+  <th
+    className={`px-5 py-3 text-xs font-semibold text-[#B6A596] uppercase tracking-widest ${right ? 'text-right' : 'text-left'}`}
+    style={{ fontFamily: "'Clash Grotesk', sans-serif" }}
+  >
+    {children}
+  </th>
+)
+
 export default function YearVsYear() {
   const [loading, setLoading] = useState(true)
   const [currentYear, setCurrentYear] = useState(null)
@@ -17,7 +35,10 @@ export default function YearVsYear() {
 
   useEffect(() => {
     async function load() {
-      const { data: tx } = await supabase.from('transactions').select('date, amount, category')
+      const { data: tx } = await supabase
+        .from('transactions')
+        .select('date, amount, category')
+        .limit(10000)
 
       const byYearMonth = {}
       const byCatYear = {}
@@ -65,34 +86,50 @@ export default function YearVsYear() {
     load()
   }, [])
 
-  if (loading) return <div className="text-gray-400 py-8">Loading…</div>
+  if (loading) return <div className="text-[#B6A596] py-8">Loading…</div>
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-xl border border-gray-200">
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-gray-700">Monthly: {prevYear} vs {currentYear}</h2>
-          {forecast && <span className="text-sm text-gray-500">{currentYear} forecast: <strong className="text-gray-900">{formatGBP(forecast)}</strong></span>}
+      {/* Monthly table */}
+      <div className="border border-[#66473B] rounded">
+        <div className="px-5 py-4 border-b border-[#35211A] flex items-center justify-between">
+          <h2
+            className="text-xs font-semibold text-[#B6A596] uppercase tracking-widest"
+            style={{ fontFamily: "'Clash Grotesk', sans-serif" }}
+          >
+            Monthly: {prevYear} vs {currentYear}
+          </h2>
+          {forecast && (
+            <span className="text-xs text-[#B6A596]">
+              {currentYear} forecast:{' '}
+              <span className="text-[#EBDCC4] font-semibold">{formatGBP(forecast)}</span>
+            </span>
+          )}
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50">
+            <thead className="bg-[#1a1a1a]">
               <tr>
-                <th className="text-left px-5 py-2 text-gray-500 font-medium">Month</th>
-                <th className="text-right px-5 py-2 text-gray-500 font-medium">{prevYear}</th>
-                <th className="text-right px-5 py-2 text-gray-500 font-medium">{currentYear}</th>
-                <th className="text-right px-5 py-2 text-gray-500 font-medium">Change</th>
+                <TH>Month</TH>
+                <TH right>{prevYear}</TH>
+                <TH right>{currentYear}</TH>
+                <TH right>Change</TH>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
-              {rows.map(r => (
-                <tr key={r.label}>
-                  <td className="px-5 py-2.5 text-gray-900">{r.label}</td>
-                  <td className="px-5 py-2.5 text-right text-gray-500">{r.prev !== null ? formatGBP(r.prev) : '—'}</td>
-                  <td className="px-5 py-2.5 text-right text-gray-900 font-medium">{r.cur !== null ? formatGBP(r.cur) : '—'}</td>
-                  <td className={`px-5 py-2.5 text-right font-medium ${r.delta === null ? 'text-gray-300' : r.delta > 0 ? 'text-red-500' : 'text-green-600'}`}>
-                    {r.delta !== null ? `${r.delta > 0 ? '+' : ''}${r.delta}%` : '—'}
+            <tbody>
+              {rows.map((r, idx) => (
+                <tr
+                  key={r.label}
+                  className={`border-b border-[#35211A] last:border-0 ${idx % 2 === 1 ? 'bg-white/[0.02]' : ''}`}
+                >
+                  <td className="px-5 py-2.5 text-[#EBDCC4]">{r.label}</td>
+                  <td className="px-5 py-2.5 text-right text-[#B6A596]">
+                    {r.prev !== null ? formatGBP(r.prev) : <span className="text-[#35211A]">—</span>}
                   </td>
+                  <td className="px-5 py-2.5 text-right text-[#EBDCC4] font-medium">
+                    {r.cur !== null ? formatGBP(r.cur) : <span className="text-[#35211A]">—</span>}
+                  </td>
+                  <DeltaCell delta={r.delta} />
                 </tr>
               ))}
             </tbody>
@@ -100,29 +137,36 @@ export default function YearVsYear() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200">
-        <div className="px-5 py-4 border-b border-gray-100">
-          <h2 className="text-sm font-semibold text-gray-700">By Category: {prevYear} vs {currentYear}</h2>
+      {/* Category table */}
+      <div className="border border-[#66473B] rounded">
+        <div className="px-5 py-4 border-b border-[#35211A]">
+          <h2
+            className="text-xs font-semibold text-[#B6A596] uppercase tracking-widest"
+            style={{ fontFamily: "'Clash Grotesk', sans-serif" }}
+          >
+            By Category: {prevYear} vs {currentYear}
+          </h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50">
+            <thead className="bg-[#1a1a1a]">
               <tr>
-                <th className="text-left px-5 py-2 text-gray-500 font-medium">Category</th>
-                <th className="text-right px-5 py-2 text-gray-500 font-medium">{prevYear}</th>
-                <th className="text-right px-5 py-2 text-gray-500 font-medium">{currentYear}</th>
-                <th className="text-right px-5 py-2 text-gray-500 font-medium">Change</th>
+                <TH>Category</TH>
+                <TH right>{prevYear}</TH>
+                <TH right>{currentYear}</TH>
+                <TH right>Change</TH>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
-              {catRows.map(r => (
-                <tr key={r.cat}>
-                  <td className="px-5 py-2.5 text-gray-900">{r.cat}</td>
-                  <td className="px-5 py-2.5 text-right text-gray-500">{formatGBP(r.prev)}</td>
-                  <td className="px-5 py-2.5 text-right text-gray-900 font-medium">{formatGBP(r.cur)}</td>
-                  <td className={`px-5 py-2.5 text-right font-medium ${r.delta === null ? 'text-gray-300' : r.delta > 0 ? 'text-red-500' : 'text-green-600'}`}>
-                    {r.delta !== null ? `${r.delta > 0 ? '+' : ''}${r.delta}%` : '—'}
-                  </td>
+            <tbody>
+              {catRows.map((r, idx) => (
+                <tr
+                  key={r.cat}
+                  className={`border-b border-[#35211A] last:border-0 ${idx % 2 === 1 ? 'bg-white/[0.02]' : ''}`}
+                >
+                  <td className="px-5 py-2.5 text-[#EBDCC4]">{r.cat}</td>
+                  <td className="px-5 py-2.5 text-right text-[#B6A596]">{formatGBP(r.prev)}</td>
+                  <td className="px-5 py-2.5 text-right text-[#EBDCC4] font-medium">{formatGBP(r.cur)}</td>
+                  <DeltaCell delta={r.delta} />
                 </tr>
               ))}
             </tbody>
