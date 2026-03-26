@@ -5,9 +5,10 @@ vi.mock('../src/lib/supabase', () => {
   const chain = {
     select: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
     then: vi.fn(),
   }
-  return { supabase: { from: vi.fn().mockReturnValue(chain), _chain: chain } }
+  return { supabase: { from: vi.fn().mockReturnValue(chain), rpc: vi.fn().mockResolvedValue({ data: [] }), _chain: chain } }
 })
 
 vi.mock('../src/context/AuthContext', () => ({
@@ -22,6 +23,7 @@ beforeEach(() => {
   supabase.from.mockReturnValue(supabase._chain)
   supabase._chain.select.mockReturnThis()
   supabase._chain.order.mockReturnThis()
+  supabase._chain.limit.mockReturnThis()
 })
 
 describe('Transactions', () => {
