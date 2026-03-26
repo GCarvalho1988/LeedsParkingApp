@@ -24,35 +24,45 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-sm bg-white rounded-xl shadow p-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Budget Dashboard</h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="min-h-screen bg-[#181818] flex flex-col items-center justify-center px-4">
+      <h1
+        className="text-5xl font-bold text-[#EBDCC4] uppercase tracking-tight mb-12"
+        style={{ fontFamily: "'Clash Grotesk', sans-serif", lineHeight: 0.85 }}
+      >
+        BUDGETDASH
+      </h1>
+      <div className="w-full max-w-sm border border-[#66473B] rounded p-8">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="block text-xs font-medium text-[#B6A596] uppercase tracking-widest mb-2">
+              Email
+            </label>
             <input
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-transparent border border-[#66473B] rounded px-3 py-2.5 text-sm text-[#EBDCC4] placeholder-[#66473B] focus:outline-none focus:border-[#DC9F85] transition-colors"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <label className="block text-xs font-medium text-[#B6A596] uppercase tracking-widest mb-2">
+              Password
+            </label>
             <input
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-transparent border border-[#66473B] rounded px-3 py-2.5 text-sm text-[#EBDCC4] placeholder-[#66473B] focus:outline-none focus:border-[#DC9F85] transition-colors"
             />
           </div>
-          {error && <p className="text-red-600 text-sm">{error}</p>}
+          {error && <p className="text-[#DC9F85] text-xs">{error}</p>}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+            className="w-full bg-[#DC9F85] text-[#181818] rounded py-2.5 text-xs font-bold uppercase tracking-widest hover:opacity-90 disabled:opacity-50 transition-opacity mt-2"
+            style={{ fontFamily: "'Clash Grotesk', sans-serif" }}
           >
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
