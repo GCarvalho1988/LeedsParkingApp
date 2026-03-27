@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { bucketCategory } from '../lib/categories'
 
 function formatGBP(n) {
   return `£${Number(n).toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
@@ -32,23 +33,32 @@ export default function YearVsYear() {
   const [rows, setRows] = useState([])
   const [catRows, setCatRows] = useState([])
   const [forecast, setForecast] = useState(null)
+  const [monthAvg, setMonthAvg] = useState(null)
 
   useEffect(() => {
     async function load() {
-      const { data: tx } = await supabase
-        .from('transactions')
-        .select('date, amount, category')
-        .limit(10000)
+      const { data, error } = await supabase.rpc('get_monthly_category_totals')
+      if (error) {
+        console.error('get_monthly_category_totals failed:', error.message)
+        setLoading(false)
+        return
+      }
 
       const byYearMonth = {}
       const byCatYear = {}
-      tx?.forEach(t => {
-        const [y, m] = t.date.split('-')
+
+      data?.forEach(({ period, category, total }) => {
+        // Exclude transient categories from all calculations
+        if (bucketCategory(category) === 'transient') return
+
+        const [y, m] = period.split('-')
         const yr = Number(y), mo = Number(m)
-        const amt = Number(t.amount)
+        const amt = Number(total)
+
         if (!byYearMonth[yr]) byYearMonth[yr] = {}
         byYearMonth[yr][mo] = (byYearMonth[yr][mo] || 0) + amt
-        const key = `${t.category}|${yr}`
+
+        const key = `${category}|${yr}`
         byCatYear[key] = (byCatYear[key] || 0) + amt
       })
 
@@ -67,19 +77,30 @@ export default function YearVsYear() {
       })
       setRows(monthRows)
 
+      // Forecast: average of completed months in the current year
       const completedMonths = monthRows.filter(r => r.cur !== null)
       if (completedMonths.length > 0) {
         const avg = completedMonths.reduce((s, r) => s + r.cur, 0) / completedMonths.length
+        setMonthAvg(Math.round(avg))
         setForecast(Math.round(avg * 12))
       }
 
-      const categories = [...new Set(tx?.map(t => t.category))].sort()
-      setCatRows(categories.map(cat => {
-        const cur = byCatYear[`${cat}|${cy}`] ?? 0
-        const prev = byCatYear[`${cat}|${py}`] ?? 0
-        const delta = prev > 0 ? Math.round(((cur - prev) / prev) * 100) : null
-        return { cat, cur, prev, delta }
-      }).sort((a, b) => b.cur - a.cur))
+      // Category rows: use all categories that appear in either year
+      const categories = [
+        ...new Set(
+          Object.keys(byCatYear)
+            .map(key => key.split('|')[0])
+        ),
+      ].sort()
+
+      setCatRows(
+        categories.map(cat => {
+          const cur = byCatYear[`${cat}|${cy}`] ?? 0
+          const prev = byCatYear[`${cat}|${py}`] ?? 0
+          const delta = prev > 0 ? Math.round(((cur - prev) / prev) * 100) : null
+          return { cat, cur, prev, delta }
+        }).sort((a, b) => b.cur - a.cur)
+      )
 
       setLoading(false)
     }
@@ -126,8 +147,14 @@ export default function YearVsYear() {
                   <td className="px-5 py-2.5 text-right text-[#B6A596]">
                     {r.prev !== null ? formatGBP(r.prev) : <span className="text-[#35211A]">—</span>}
                   </td>
-                  <td className="px-5 py-2.5 text-right text-[#EBDCC4] font-medium">
-                    {r.cur !== null ? formatGBP(r.cur) : <span className="text-[#35211A]">—</span>}
+                  <td className="px-5 py-2.5 text-right">
+                    {r.cur !== null ? (
+                      <span className="text-[#EBDCC4] font-medium">{formatGBP(r.cur)}</span>
+                    ) : monthAvg !== null ? (
+                      <span className="text-[#66473B]">~{formatGBP(monthAvg)}</span>
+                    ) : (
+                      <span className="text-[#35211A]">—</span>
+                    )}
                   </td>
                   <DeltaCell delta={r.delta} />
                 </tr>
@@ -165,7 +192,9 @@ export default function YearVsYear() {
                 >
                   <td className="px-5 py-2.5 text-[#EBDCC4]">{r.cat}</td>
                   <td className="px-5 py-2.5 text-right text-[#B6A596]">{formatGBP(r.prev)}</td>
-                  <td className="px-5 py-2.5 text-right text-[#EBDCC4] font-medium">{formatGBP(r.cur)}</td>
+                  <td className="px-5 py-2.5 text-right text-[#EBDCC4] font-medium">
+                    {r.cur > 0 ? formatGBP(r.cur) : <span className="text-[#66473B]">~{formatGBP(monthAvg ?? 0)}</span>}
+                  </td>
                   <DeltaCell delta={r.delta} />
                 </tr>
               ))}
