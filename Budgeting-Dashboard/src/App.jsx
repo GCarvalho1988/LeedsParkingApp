@@ -7,6 +7,7 @@ import Overview from './pages/Overview'
 import Categories from './pages/Categories'
 import YearVsYear from './pages/YearVsYear'
 import Transactions from './pages/Transactions'
+import Review from './pages/Review'
 
 function Layout({ children }) {
   return (
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/categories" element={<ProtectedRoute><Layout><Categories /></Layout></ProtectedRoute>} />
           <Route path="/year-vs-year" element={<ProtectedRoute><Layout><YearVsYear /></Layout></ProtectedRoute>} />
           <Route path="/transactions" element={<ProtectedRoute><Layout><Transactions /></Layout></ProtectedRoute>} />
+          <Route path="/review" element={<ProtectedRoute><Layout><Review /></Layout></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
