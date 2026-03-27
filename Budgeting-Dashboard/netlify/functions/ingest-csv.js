@@ -131,9 +131,12 @@ export const handler = async (event) => {
 
   if (incomeRows.length > 0) {
     const incomeDbRows = incomeRows.map(({ type, ...r }) => r)
-    await supabase
+    const { error: incomeErr } = await supabase
       .from('income')
       .upsert(incomeDbRows, { onConflict: 'date,description,amount', ignoreDuplicates: true })
+    if (incomeErr) {
+      return { statusCode: 500, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: incomeErr.message }) }
+    }
   }
 
   return {
