@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { BILLS_CATEGORIES, TRANSIENT_CATEGORIES } from '../lib/categories'
-import { nextPeriodBoundary } from './Overview'
+import { nextPeriodBoundary, formatPeriodLabel } from '../lib/dateUtils'
 
 function formatGBP(n) {
   return `£${Number(n).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -28,7 +28,8 @@ export default function Review() {
       .from('uploads')
       .select('period')
       .order('period', { ascending: true })
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) { console.error('uploads query failed:', error.message); return }
         const ps = data?.map(r => r.period) ?? []
         setPeriods(ps)
         setPeriodIndex(ps.length - 1)
@@ -52,7 +53,8 @@ export default function Review() {
       .gte('date', `${period}-01`)
       .lt('date', nextPeriodBoundary(period))
       .not('category', 'in', `(${excluded.map(c => `"${c}"`).join(',')})`)
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) { console.error('transactions query failed:', error.message); setLoading(false); return }
         setTransactions(sortTransactions(data ?? []))
         setLoading(false)
       })
@@ -66,12 +68,6 @@ export default function Review() {
     if (!error) {
       setTransactions(prev => prev.filter(t => t.id !== txId))
     }
-  }
-
-  function formatPeriodLabel(p) {
-    if (!p) return ''
-    const [y, m] = p.split('-')
-    return new Date(Number(y), Number(m) - 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
   }
 
   if (periodIndex === null) return <div className="text-[#B6A596] py-8">Loading…</div>
