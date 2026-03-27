@@ -8,37 +8,55 @@ function formatGBP(n) {
 
 export default function Categories() {
   const [categories, setCategories] = useState([])
-  const [selected, setSelected] = useState(null)
-  const [monthData, setMonthData] = useState([])
-  const [yoy, setYoy] = useState(null)
+  const [selected, setSelected]     = useState(null)
+  const [monthData, setMonthData]   = useState([])
+  const [yoy, setYoy]               = useState(null)
   const [transactions, setTransactions] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading]       = useState(true)
 
+  // Load distinct categories from both transactions and income tables
   useEffect(() => {
-    supabase
-      .rpc('get_distinct_categories')
-      .then(({ data }) => {
-        const cats = data?.map(r => r.category) ?? []
-        setCategories(cats)
-        if (cats.length) setSelected(cats[0])
-        setLoading(false)
-      })
+    async function loadCategories() {
+      const [rpcResult, incResult] = await Promise.all([
+        supabase.rpc('get_distinct_categories'),
+        supabase.from('income').select('category').order('category'),
+      ])
+      const txCats  = (rpcResult.data ?? []).map(r => r.category)
+      const incCats = (incResult.data ?? []).map(r => r.category)
+      const cats    = [...new Set([...txCats, ...incCats])].sort()
+      setCategories(cats)
+      if (cats.length) setSelected(cats[0])
+      setLoading(false)
+    }
+    loadCategories()
   }, [])
 
+  // Load transactions from both tables for selected category
   useEffect(() => {
     if (!selected) return
     async function load() {
-      const { data: txs } = await supabase
-        .from('transactions')
-        .select('date, amount, description')
-        .eq('category', selected)
-        .order('date', { ascending: false })
-        .limit(10000)
+      const [txResult, incResult] = await Promise.all([
+        supabase
+          .from('transactions')
+          .select('date, amount, description')
+          .eq('category', selected)
+          .order('date', { ascending: false })
+          .limit(10000),
+        supabase
+          .from('income')
+          .select('date, amount, description')
+          .eq('category', selected)
+          .order('date', { ascending: false })
+          .limit(10000),
+      ])
 
-      setTransactions(txs || [])
+      const combined = [...(txResult.data ?? []), ...(incResult.data ?? [])]
+        .sort((a, b) => b.date.localeCompare(a.date))
+
+      setTransactions(combined)
 
       const monthMap = {}
-      txs?.forEach(t => {
+      combined.forEach(t => {
         const mo = t.date.slice(0, 7)
         monthMap[mo] = (monthMap[mo] || 0) + Number(t.amount)
       })
@@ -52,13 +70,13 @@ export default function Categories() {
         })
 
       const byYear = {}
-      txs?.forEach(t => {
+      combined.forEach(t => {
         const yr = t.date.slice(0, 4)
         byYear[yr] = (byYear[yr] || 0) + Number(t.amount)
       })
       const years = Object.keys(byYear).sort()
-      const cy = years[years.length - 1]
-      const py = String(Number(cy) - 1)
+      const cy  = years[years.length - 1]
+      const py  = String(Number(cy) - 1)
       const yoyDelta = byYear[py]
         ? Math.round(((byYear[cy] - byYear[py]) / byYear[py]) * 100)
         : null
@@ -73,22 +91,16 @@ export default function Categories() {
 
   return (
     <div className="space-y-6">
-      {/* Category pills */}
-      <div className="flex flex-wrap gap-2">
+      {/* Category dropdown */}
+      <select
+        value={selected ?? ''}
+        onChange={e => setSelected(e.target.value)}
+        className="bg-[#181818] border border-[#66473B] text-[#EBDCC4] text-sm rounded px-3 py-2 focus:border-[#DC9F85] focus:outline-none w-full max-w-xs"
+      >
         {categories.map(cat => (
-          <button
-            key={cat}
-            onClick={() => setSelected(cat)}
-            className={`px-3 py-1.5 rounded text-xs font-medium tracking-wide border transition-colors ${
-              selected === cat
-                ? 'border-[#DC9F85] text-[#DC9F85]'
-                : 'border-[#66473B] text-[#B6A596] hover:border-[#B6A596]'
-            }`}
-          >
-            {cat}
-          </button>
+          <option key={cat} value={cat}>{cat}</option>
         ))}
-      </div>
+      </select>
 
       {selected && (
         <>
@@ -96,19 +108,13 @@ export default function Categories() {
             <div className="flex gap-4">
               <div className="flex-1 border border-[#66473B] rounded p-5">
                 <p className="text-xs text-[#B6A596] uppercase tracking-widest">{yoy.py} Total</p>
-                <p
-                  className="text-xl font-bold text-[#EBDCC4] mt-1"
-                  style={{ fontFamily: "'Clash Grotesk', sans-serif" }}
-                >
+                <p className="text-xl font-bold text-[#EBDCC4] mt-1" style={{ fontFamily: "'Clash Grotesk', sans-serif" }}>
                   {formatGBP(yoy.pyTotal)}
                 </p>
               </div>
               <div className="flex-1 border border-[#66473B] rounded p-5">
                 <p className="text-xs text-[#B6A596] uppercase tracking-widest">{yoy.cy} Total</p>
-                <p
-                  className="text-xl font-bold text-[#EBDCC4] mt-1"
-                  style={{ fontFamily: "'Clash Grotesk', sans-serif" }}
-                >
+                <p className="text-xl font-bold text-[#EBDCC4] mt-1" style={{ fontFamily: "'Clash Grotesk', sans-serif" }}>
                   {formatGBP(yoy.cyTotal)}
                 </p>
                 {yoy.delta !== null && (
@@ -121,21 +127,15 @@ export default function Categories() {
           )}
 
           <div className="border border-[#66473B] rounded p-5">
-            <h2
-              className="text-xs font-semibold text-[#B6A596] uppercase tracking-widest mb-4"
-              style={{ fontFamily: "'Clash Grotesk', sans-serif" }}
-            >
-              {selected} — Monthly Spend
+            <h2 className="text-xs font-semibold text-[#B6A596] uppercase tracking-widest mb-4" style={{ fontFamily: "'Clash Grotesk', sans-serif" }}>
+              {selected} — Monthly
             </h2>
             <MonthlyTrendChart data={monthData} />
           </div>
 
           <div className="border border-[#66473B] rounded">
             <div className="px-5 py-4 border-b border-[#35211A]">
-              <h2
-                className="text-xs font-semibold text-[#B6A596] uppercase tracking-widest"
-                style={{ fontFamily: "'Clash Grotesk', sans-serif" }}
-              >
+              <h2 className="text-xs font-semibold text-[#B6A596] uppercase tracking-widest" style={{ fontFamily: "'Clash Grotesk', sans-serif" }}>
                 Transactions in {selected}
               </h2>
             </div>
@@ -149,7 +149,9 @@ export default function Categories() {
                     <p className="text-[#EBDCC4]">{tx.description}</p>
                     <p className="text-[#B6A596] text-xs mt-0.5">{tx.date}</p>
                   </div>
-                  <p className="text-[#EBDCC4] font-medium">{formatGBP(tx.amount)}</p>
+                  <p className={`font-medium ${Number(tx.amount) < 0 ? 'text-[#DC9F85]' : 'text-[#EBDCC4]'}`}>
+                    {formatGBP(tx.amount)}
+                  </p>
                 </div>
               ))}
             </div>
