@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { bucketCategory } from '../lib/categories'
+import { fetchCpiRates, cpiAdjust } from '../lib/ons'
 
 function formatGBP(n) {
   return `£${Number(n).toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
@@ -27,81 +28,30 @@ const TH = ({ children, right }) => (
 )
 
 export default function YearVsYear() {
-  const [loading, setLoading] = useState(true)
-  const [currentYear, setCurrentYear] = useState(null)
-  const [prevYear, setPrevYear] = useState(null)
-  const [rows, setRows] = useState([])
-  const [catRows, setCatRows] = useState([])
-  const [forecast, setForecast] = useState(null)
-  const [monthAvg, setMonthAvg] = useState(null)
+  const [loading, setLoading]           = useState(true)
+  const [allData, setAllData]           = useState([])
+  const [years, setYears]               = useState([])
+  const [basisYear, setBasisYear]       = useState(null)
+  const [inflationAdj, setInflationAdj] = useState(false)
+  const [cpiRates, setCpiRates]         = useState({})
 
   useEffect(() => {
     async function load() {
-      const { data, error } = await supabase.rpc('get_monthly_category_totals')
+      const [{ data, error }, rates] = await Promise.all([
+        supabase.rpc('get_monthly_category_totals'),
+        fetchCpiRates().catch(() => ({})),
+      ])
       if (error) {
         console.error('get_monthly_category_totals failed:', error.message)
         setLoading(false)
         return
       }
-
-      const byYearMonth = {}
-      const byCatYear = {}
-
-      data?.forEach(({ period, category, total }) => {
-        // Exclude transient categories from all calculations
-        if (bucketCategory(category) === 'transient') return
-
-        const [y, m] = period.split('-')
-        const yr = Number(y), mo = Number(m)
-        const amt = Number(total)
-
-        if (!byYearMonth[yr]) byYearMonth[yr] = {}
-        byYearMonth[yr][mo] = (byYearMonth[yr][mo] || 0) + amt
-
-        const key = `${category}|${yr}`
-        byCatYear[key] = (byCatYear[key] || 0) + amt
-      })
-
-      const years = Object.keys(byYearMonth).map(Number).sort()
-      const cy = years[years.length - 1]
-      const py = cy - 1
-      setCurrentYear(cy)
-      setPrevYear(py)
-
-      const monthRows = MONTHS.map((label, i) => {
-        const mo = i + 1
-        const cur = byYearMonth[cy]?.[mo] ?? null
-        const prev = byYearMonth[py]?.[mo] ?? null
-        const delta = cur !== null && prev !== null ? Math.round(((cur - prev) / prev) * 100) : null
-        return { label, cur, prev, delta }
-      })
-      setRows(monthRows)
-
-      // Forecast: average of completed months in the current year
-      const completedMonths = monthRows.filter(r => r.cur !== null)
-      if (completedMonths.length > 0) {
-        const avg = completedMonths.reduce((s, r) => s + r.cur, 0) / completedMonths.length
-        setMonthAvg(Math.round(avg))
-        setForecast(Math.round(avg * 12))
-      }
-
-      // Category rows: use all categories that appear in either year
-      const categories = [
-        ...new Set(
-          Object.keys(byCatYear)
-            .map(key => key.split('|')[0])
-        ),
-      ].sort()
-
-      setCatRows(
-        categories.map(cat => {
-          const cur = byCatYear[`${cat}|${cy}`] ?? null
-          const prev = byCatYear[`${cat}|${py}`] ?? null
-          const delta = prev !== null && prev > 0 ? Math.round(((cur - prev) / prev) * 100) : null
-          return { cat, cur, prev, delta }
-        }).sort((a, b) => (b.cur ?? 0) - (a.cur ?? 0))
-      )
-
+      const filtered = (data ?? []).filter(r => bucketCategory(r.category) !== 'transient')
+      setAllData(filtered)
+      setCpiRates(rates)
+      const ys = [...new Set(filtered.map(r => r.period.slice(0, 4)))].sort()
+      setYears(ys)
+      setBasisYear(ys.length >= 2 ? Number(ys[ys.length - 2]) : Number(ys[0]))
       setLoading(false)
     }
     load()
@@ -109,8 +59,99 @@ export default function YearVsYear() {
 
   if (loading) return <div className="text-[#B6A596] py-8">Loading…</div>
 
+  const cy = basisYear ? basisYear + 1 : null
+  const py = basisYear
+
+  const byYearMonth = {}
+  allData.forEach(({ period, total }) => {
+    const [y, m] = period.split('-')
+    const yr = Number(y), mo = Number(m)
+    if (!byYearMonth[yr]) byYearMonth[yr] = {}
+    byYearMonth[yr][mo] = (byYearMonth[yr][mo] || 0) + Number(total)
+  })
+
+  // Months present in current year (for fair category comparison)
+  const cyMonths = new Set(
+    allData
+      .filter(r => Number(r.period.slice(0, 4)) === cy)
+      .map(r => r.period.split('-')[1])
+  )
+
+  // Build byCatYear — prev year only counted for months also in current year
+  const byCatYear = {}
+  allData.forEach(({ period, category, total }) => {
+    const [y, m] = period.split('-')
+    const yr = Number(y)
+    if (yr === py && !cyMonths.has(m)) return
+    const key = `${category}|${yr}`
+    byCatYear[key] = (byCatYear[key] || 0) + Number(total)
+  })
+
+  const monthRows = MONTHS.map((label, i) => {
+    const mo       = i + 1
+    const cur      = byYearMonth[cy]?.[mo] ?? null
+    const rawPrev  = byYearMonth[py]?.[mo] ?? null
+    const prev     = inflationAdj && rawPrev !== null ? Math.round(cpiAdjust(rawPrev, py, cy, cpiRates)) : rawPrev
+    const delta    = cur !== null && prev !== null ? Math.round(((cur - prev) / prev) * 100) : null
+    return { label, cur, prev, delta }
+  })
+
+  const completedMonths = monthRows.filter(r => r.cur !== null)
+  const monthAvg = completedMonths.length > 0
+    ? Math.round(completedMonths.reduce((s, r) => s + r.cur, 0) / completedMonths.length)
+    : null
+  const forecast = monthAvg ? Math.round(monthAvg * 12) : null
+
+  const categories = [...new Set(Object.keys(byCatYear).map(k => k.split('|')[0]))].sort()
+
+  const catRows = categories.map(cat => {
+    const cur     = byCatYear[`${cat}|${cy}`] ?? null
+    const rawPrev = byCatYear[`${cat}|${py}`] ?? null
+    const prev    = inflationAdj && rawPrev !== null ? Math.round(cpiAdjust(rawPrev, py, cy, cpiRates)) : rawPrev
+    const delta   = prev !== null && prev > 0 ? Math.round(((cur - prev) / prev) * 100) : null
+    return { cat, cur, prev, delta }
+  }).sort((a, b) => (b.cur ?? 0) - (a.cur ?? 0))
+
+  const basisYearOptions = years.slice(0, -1)
+
   return (
     <div className="space-y-6">
+      {/* Controls */}
+      <div className="flex items-center gap-6 flex-wrap">
+        <div className="flex items-center gap-3">
+          <label
+            className="text-xs text-[#B6A596] uppercase tracking-widest"
+            style={{ fontFamily: "'Clash Grotesk', sans-serif" }}
+          >
+            Basis year
+          </label>
+          <select
+            value={basisYear ?? ''}
+            onChange={e => setBasisYear(Number(e.target.value))}
+            className="bg-[#181818] border border-[#66473B] text-[#EBDCC4] text-sm rounded px-3 py-1.5 focus:border-[#DC9F85] focus:outline-none"
+          >
+            {basisYearOptions.map(y => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+        </div>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={inflationAdj}
+            onChange={e => setInflationAdj(e.target.checked)}
+            aria-label="inflation adjusted"
+            className="accent-[#DC9F85]"
+          />
+          <span
+            className="text-xs text-[#B6A596] uppercase tracking-widest"
+            style={{ fontFamily: "'Clash Grotesk', sans-serif" }}
+          >
+            CPI adjusted
+          </span>
+        </label>
+      </div>
+
       {/* Monthly table */}
       <div className="border border-[#66473B] rounded">
         <div className="px-5 py-4 border-b border-[#35211A] flex items-center justify-between">
@@ -118,11 +159,11 @@ export default function YearVsYear() {
             className="text-xs font-semibold text-[#B6A596] uppercase tracking-widest"
             style={{ fontFamily: "'Clash Grotesk', sans-serif" }}
           >
-            Monthly: {prevYear} vs {currentYear}
+            Monthly: {py} vs {cy}
           </h2>
           {forecast && (
             <span className="text-xs text-[#B6A596]">
-              {currentYear} forecast:{' '}
+              {cy} forecast:{' '}
               <span className="text-[#EBDCC4] font-semibold">{formatGBP(forecast)}</span>
             </span>
           )}
@@ -132,17 +173,14 @@ export default function YearVsYear() {
             <thead className="bg-[#1a1a1a]">
               <tr>
                 <TH>Month</TH>
-                <TH right>{prevYear}</TH>
-                <TH right>{currentYear}</TH>
+                <TH right>{py}{inflationAdj ? ' (adj)' : ''}</TH>
+                <TH right>{cy}</TH>
                 <TH right>Change</TH>
               </tr>
             </thead>
             <tbody>
-              {rows.map((r, idx) => (
-                <tr
-                  key={r.label}
-                  className={`border-b border-[#35211A] last:border-0 ${idx % 2 === 1 ? 'bg-white/[0.02]' : ''}`}
-                >
+              {monthRows.map((r, idx) => (
+                <tr key={r.label} className={`border-b border-[#35211A] last:border-0 ${idx % 2 === 1 ? 'bg-white/[0.02]' : ''}`}>
                   <td className="px-5 py-2.5 text-[#EBDCC4]">{r.label}</td>
                   <td className="px-5 py-2.5 text-right text-[#B6A596]">
                     {r.prev !== null ? formatGBP(r.prev) : <span className="text-[#35211A]">—</span>}
@@ -171,7 +209,7 @@ export default function YearVsYear() {
             className="text-xs font-semibold text-[#B6A596] uppercase tracking-widest"
             style={{ fontFamily: "'Clash Grotesk', sans-serif" }}
           >
-            By Category: {prevYear} vs {currentYear}
+            By Category: {py}{inflationAdj ? ' (adj)' : ''} vs {cy}
           </h2>
         </div>
         <div className="overflow-x-auto">
@@ -179,23 +217,20 @@ export default function YearVsYear() {
             <thead className="bg-[#1a1a1a]">
               <tr>
                 <TH>Category</TH>
-                <TH right>{prevYear}</TH>
-                <TH right>{currentYear}</TH>
+                <TH right>{py}{inflationAdj ? ' (adj)' : ''}</TH>
+                <TH right>{cy}</TH>
                 <TH right>Change</TH>
               </tr>
             </thead>
             <tbody>
               {catRows.map((r, idx) => (
-                <tr
-                  key={r.cat}
-                  className={`border-b border-[#35211A] last:border-0 ${idx % 2 === 1 ? 'bg-white/[0.02]' : ''}`}
-                >
+                <tr key={r.cat} className={`border-b border-[#35211A] last:border-0 ${idx % 2 === 1 ? 'bg-white/[0.02]' : ''}`}>
                   <td className="px-5 py-2.5 text-[#EBDCC4]">{r.cat}</td>
                   <td className="px-5 py-2.5 text-right text-[#B6A596]">
                     {r.prev !== null ? formatGBP(r.prev) : <span className="text-[#35211A]">—</span>}
                   </td>
                   <td className="px-5 py-2.5 text-right text-[#EBDCC4] font-medium">
-                    {r.cur !== null ? formatGBP(r.cur) : <span className="text-[#66473B]">~{formatGBP(monthAvg ?? 0)}</span>}
+                    {r.cur !== null ? formatGBP(r.cur) : <span className="text-[#35211A]">—</span>}
                   </td>
                   <DeltaCell delta={r.delta} />
                 </tr>
