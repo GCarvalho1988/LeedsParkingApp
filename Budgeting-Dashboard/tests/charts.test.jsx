@@ -45,3 +45,22 @@ describe('MonthlyTrendChart', () => {
     expect(container.firstChild).toBeTruthy()
   })
 })
+
+describe('MonthlyTrendChart — avg line', () => {
+  const dataWithAvg = [
+    { month: 'Jan 24', amount: 1200, avg: 1100 },
+    { month: 'Feb 24', amount: 1350, avg: 1150 },
+  ]
+  const dataWithoutAvg = [
+    { month: 'Jan 24', amount: 1200 },
+    { month: 'Feb 24', amount: 1350 },
+  ]
+
+  it('renders without crashing when avgData is absent', () => {
+    render(<MonthlyTrendChart data={dataWithoutAvg} />)
+  })
+
+  it('renders without crashing when avg field is present in data', () => {
+    render(<MonthlyTrendChart data={dataWithAvg} />)
+  })
+})
