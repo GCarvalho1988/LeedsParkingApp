@@ -1,114 +1,134 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import KpiCard from '../components/KpiCard'
-import CategoryBarChart from '../components/CategoryBarChart'
 import MonthlyTrendChart from '../components/MonthlyTrendChart'
+import DiscretionaryTreemap from '../components/DiscretionaryTreemap'
+import { bucketCategory } from '../lib/categories'
 
 function formatGBP(n) {
-  return `£${Number(n).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return `£${Number(n).toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
 }
 
-// Returns the ISO date string for the first day of the month after `period` (YYYY-MM)
+// Returns ISO date string for first day of month after period (YYYY-MM)
 export function nextPeriodBoundary(period) {
   const [y, m] = period.split('-')
   const d = new Date(Number(y), Number(m), 1)
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
 }
 
-export default function Overview() {
-  const [periods, setPeriods] = useState([])
-  const [periodIndex, setPeriodIndex] = useState(null) // index into periods[] — null = loading
-  const [kpis, setKpis] = useState(null)
-  const [categoryData, setCategoryData] = useState([])
-  const [trendData, setTrendData] = useState([])
-  const [loading, setLoading] = useState(true)
+// Rolling average of trueSpend over a sliding window
+// monthlyData: [{period: string, trueSpend: number}] sorted ascending
+export function computeRollingAverage(monthlyData, window = 6) {
+  return monthlyData.map((_, i) => {
+    const start = Math.max(0, i - window + 1)
+    const slice = monthlyData.slice(start, i + 1)
+    const avg = slice.reduce((s, x) => s + x.trueSpend, 0) / slice.length
+    return { period: monthlyData[i].period, avg: Math.round(avg) }
+  })
+}
 
-  // Load available periods once on mount
+function formatPeriodLabel(p) {
+  if (!p) return ''
+  const [y, m] = p.split('-')
+  return new Date(Number(y), Number(m) - 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+}
+
+export default function Overview() {
+  const [allCatData, setAllCatData] = useState(null)  // [{period, category, total}]
+  const [allIncomeData, setAllIncomeData] = useState(null)  // [{period, total}]
+  const [periods, setPeriods] = useState([])
+  const [periodIndex, setPeriodIndex] = useState(null)
+  const [nurseryTotal, setNurseryTotal] = useState(0)
+
+  // Load all data once on mount
   useEffect(() => {
-    supabase
-      .from('uploads')
-      .select('period')
-      .order('period', { ascending: true })
-      .then(({ data }) => {
-        const ps = data?.map(r => r.period) ?? []
-        setPeriods(ps)
-        setPeriodIndex(ps.length - 1) // default to most recent
-      })
+    async function load() {
+      const [{ data: catData }, { data: incomeData }] = await Promise.all([
+        supabase.rpc('get_monthly_category_totals'),
+        supabase.rpc('get_monthly_income'),
+      ])
+      const ps = [...new Set((catData ?? []).map(r => r.period))].sort()
+      setAllCatData(catData ?? [])
+      setAllIncomeData(incomeData ?? [])
+      setPeriods(ps)
+      setPeriodIndex(ps.length > 0 ? ps.length - 1 : null)
+    }
+    load()
   }, [])
 
-  // Load KPIs and category data whenever the selected period changes
+  const period = periodIndex !== null && periods.length > 0 ? periods[periodIndex] : null
+
+  // Fetch nursery sub-total for selected period (the only per-period re-fetch)
   useEffect(() => {
-    if (periodIndex === null || periods.length === 0) return
-
-    async function load() {
-      setLoading(true)
-      const period = periods[periodIndex]
-      const [y, m] = period.split('-')
-      const lastYearPeriod = `${Number(y) - 1}-${m.padStart(2, '0')}`
-      const boundary = nextPeriodBoundary(period)
-      const lastYearBoundary = nextPeriodBoundary(lastYearPeriod)
-
-      // Current period transactions
-      const { data: currentTx } = await supabase
-        .from('transactions')
-        .select('amount, category')
-        .gte('date', `${period}-01`)
-        .lt('date', boundary)
-
-      const currentTotal = currentTx?.reduce((s, t) => s + Number(t.amount), 0) ?? 0
-
-      // Same period last year
-      const { data: lastYearTx } = await supabase
-        .from('transactions')
-        .select('amount')
-        .gte('date', `${lastYearPeriod}-01`)
-        .lt('date', lastYearBoundary)
-
-      const lastYearTotal = lastYearTx?.reduce((s, t) => s + Number(t.amount), 0) ?? 0
-      const yoyDelta = lastYearTotal > 0
-        ? Math.round(((currentTotal - lastYearTotal) / lastYearTotal) * 100)
-        : null
-
-      // Category breakdown
-      const catMap = {}
-      currentTx?.forEach(t => { catMap[t.category] = (catMap[t.category] || 0) + Number(t.amount) })
-      const sortedCats = Object.entries(catMap)
-        .map(([category, amount]) => ({ category, amount }))
-        .sort((a, b) => b.amount - a.amount)
-      const topCat = sortedCats[0]?.category ?? '—'
-
-      // Flag count
-      const { count: flagCount } = await supabase
-        .from('flags')
-        .select('id', { count: 'exact', head: true })
-
-      // Monthly trend via RPC (no row limit)
-      const { data: monthly } = await supabase.rpc('get_monthly_totals')
-      const trend = (monthly ?? []).slice(-12).map(({ period: mo, total }) => {
-        const [ty, tm] = mo.split('-')
-        const label = new Date(Number(ty), Number(tm) - 1)
-          .toLocaleDateString('en-GB', { month: 'short', year: '2-digit' })
-        return { month: label, amount: Math.round(Number(total)) }
+    if (!period) return
+    supabase
+      .from('transactions')
+      .select('amount')
+      .ilike('description', 'Vasco Nursery%')
+      .gte('date', `${period}-01`)
+      .lt('date', nextPeriodBoundary(period))
+      .then(({ data }) => {
+        setNurseryTotal(data?.reduce((s, t) => s + Number(t.amount), 0) ?? 0)
       })
+  }, [period])
 
-      setKpis({ currentTotal, yoyDelta, topCat, flagCount: flagCount ?? 0 })
-      setCategoryData(sortedCats)
-      setTrendData(trend)
-      setLoading(false)
+  // Derive KPIs for selected period from cached data
+  const periodRows = period && allCatData
+    ? allCatData.filter(r => r.period === period)
+    : []
+
+  const bills = periodRows
+    .filter(r => bucketCategory(r.category) === 'bills')
+    .reduce((s, r) => s + Number(r.total), 0)
+
+  const discretionary = periodRows
+    .filter(r => bucketCategory(r.category) === 'discretionary')
+    .reduce((s, r) => s + Number(r.total), 0)
+
+  const transient = periodRows
+    .filter(r => bucketCategory(r.category) === 'transient')
+    .reduce((s, r) => s + Number(r.total), 0)
+
+  const income = allIncomeData
+    ? Number(allIncomeData.find(r => r.period === period)?.total ?? 0)
+    : 0
+
+  // Discretionary treemap: categories for selected period, sorted by total
+  const discretionaryItems = periodRows
+    .filter(r => bucketCategory(r.category) === 'discretionary')
+    .map(r => ({ name: r.category, size: Math.round(Number(r.total)) }))
+    .sort((a, b) => b.size - a.size)
+
+  // Monthly trend: true spend (bills + discretionary only) + 6-month rolling average
+  const allPeriods = allCatData
+    ? [...new Set(allCatData.map(r => r.period))].sort()
+    : []
+
+  const monthlyTrueSpend = allPeriods.map(p => {
+    const rows = allCatData.filter(r => r.period === p)
+    const trueSpend = rows
+      .filter(r => bucketCategory(r.category) !== 'transient')
+      .reduce((s, r) => s + Number(r.total), 0)
+    return { period: p, trueSpend: Math.round(trueSpend) }
+  })
+
+  const rollingAvg = computeRollingAverage(monthlyTrueSpend)
+
+  const trendData = monthlyTrueSpend.slice(-12).map((item, i) => {
+    const [y, m] = item.period.split('-')
+    const label = new Date(Number(y), Number(m) - 1)
+      .toLocaleDateString('en-GB', { month: 'short', year: '2-digit' })
+    const offset = monthlyTrueSpend.length - Math.min(12, monthlyTrueSpend.length)
+    return {
+      month: label,
+      amount: item.trueSpend,
+      avg: rollingAvg[offset + i]?.avg,
     }
+  })
 
-    load()
-  }, [periodIndex, periods])
+  const loading = allCatData === null || allIncomeData === null || periodIndex === null
 
-  const period = periodIndex !== null ? periods[periodIndex] : null
-
-  function formatPeriodLabel(p) {
-    if (!p) return ''
-    const [y, m] = p.split('-')
-    return new Date(Number(y), Number(m) - 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
-  }
-
-  if (periodIndex === null) return <div className="text-[#B6A596] py-8">Loading…</div>
+  if (loading) return <div className="text-[#B6A596] py-8">Loading…</div>
   if (periods.length === 0) return <div className="text-[#B6A596] py-8">No data yet. Upload a CSV to get started.</div>
 
   return (
@@ -137,43 +157,41 @@ export default function Overview() {
         </button>
       </div>
 
-      {loading ? (
-        <div className="text-[#B6A596] py-4">Loading…</div>
-      ) : (
-        <>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <KpiCard label="Total Spent" value={formatGBP(kpis.currentTotal)} />
-            <KpiCard
-              label="vs Last Year"
-              value={kpis.yoyDelta !== null ? `${kpis.yoyDelta > 0 ? '+' : ''}${kpis.yoyDelta}%` : '—'}
-              delta={kpis.yoyDelta}
-              deltaLabel="YoY"
-            />
-            <KpiCard label="Top Category" value={kpis.topCat} />
-            <KpiCard label="Flagged" value={kpis.flagCount} />
-          </div>
+      {/* 4 KPI cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <KpiCard
+          label="Bills & Fixed"
+          value={formatGBP(bills)}
+          subLine={nurseryTotal > 0 ? `Nursery ${formatGBP(nurseryTotal)}` : undefined}
+        />
+        <KpiCard label="Discretionary" value={formatGBP(discretionary)} />
+        <KpiCard label="Transfers" value={formatGBP(transient)} muted />
+        <KpiCard label="Income" value={income > 0 ? formatGBP(income) : '—'} />
+      </div>
 
-          <div className="border border-[#66473B] rounded p-5">
-            <h2
-              className="text-xs font-semibold text-[#B6A596] uppercase tracking-widest mb-4"
-              style={{ fontFamily: "'Clash Grotesk', sans-serif" }}
-            >
-              Spend by Category
-            </h2>
-            <CategoryBarChart data={categoryData} />
-          </div>
-
-          <div className="border border-[#66473B] rounded p-5">
-            <h2
-              className="text-xs font-semibold text-[#B6A596] uppercase tracking-widest mb-4"
-              style={{ fontFamily: "'Clash Grotesk', sans-serif" }}
-            >
-              Monthly Trend
-            </h2>
-            <MonthlyTrendChart data={trendData} />
-          </div>
-        </>
+      {/* Discretionary treemap */}
+      {discretionaryItems.length > 0 && (
+        <div className="border border-[#66473B] rounded p-5">
+          <h2
+            className="text-xs font-semibold text-[#B6A596] uppercase tracking-widest mb-4"
+            style={{ fontFamily: "'Clash Grotesk', sans-serif" }}
+          >
+            Discretionary Breakdown
+          </h2>
+          <DiscretionaryTreemap data={discretionaryItems} />
+        </div>
       )}
+
+      {/* Monthly trend with rolling average */}
+      <div className="border border-[#66473B] rounded p-5">
+        <h2
+          className="text-xs font-semibold text-[#B6A596] uppercase tracking-widest mb-4"
+          style={{ fontFamily: "'Clash Grotesk', sans-serif" }}
+        >
+          Monthly Trend
+        </h2>
+        <MonthlyTrendChart data={trendData} />
+      </div>
     </div>
   )
 }
