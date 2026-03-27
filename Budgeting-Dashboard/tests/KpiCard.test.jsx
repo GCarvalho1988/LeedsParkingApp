@@ -28,3 +28,23 @@ describe('KpiCard', () => {
     expect(screen.queryByText(/↑|↓/)).not.toBeInTheDocument()
   })
 })
+
+describe('KpiCard — subLine prop', () => {
+  it('renders subLine text when provided', () => {
+    render(<KpiCard label="Bills" value="£1,200" subLine="Nursery £550" />)
+    expect(screen.getByText('Nursery £550')).toBeInTheDocument()
+  })
+
+  it('does not render subLine element when not provided', () => {
+    render(<KpiCard label="Bills" value="£1,200" />)
+    expect(screen.queryByTestId('kpi-subline')).toBeNull()
+  })
+})
+
+describe('KpiCard — muted prop', () => {
+  it('renders value in muted colour when muted=true', () => {
+    render(<KpiCard label="Transfers" value="£300" muted />)
+    const valueEl = screen.getByText('£300')
+    expect(valueEl.className).toContain('66473B')
+  })
+})

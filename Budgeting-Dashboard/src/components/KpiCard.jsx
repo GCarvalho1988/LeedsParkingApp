@@ -1,4 +1,4 @@
-export default function KpiCard({ label, value, delta, deltaLabel }) {
+export default function KpiCard({ label, value, delta, deltaLabel, subLine, muted }) {
   const positive = delta > 0
   return (
     <div className="bg-[#181818] border border-[#66473B] rounded p-5">
@@ -9,11 +9,16 @@ export default function KpiCard({ label, value, delta, deltaLabel }) {
         {label}
       </p>
       <p
-        className="text-2xl font-bold text-[#EBDCC4] mt-2"
+        className={`text-2xl font-bold mt-2 ${muted ? 'text-[#66473B]' : 'text-[#EBDCC4]'}`}
         style={{ fontFamily: "'Clash Grotesk', sans-serif" }}
       >
         {value}
       </p>
+      {subLine && (
+        <p className="text-xs text-[#B6A596] mt-1" data-testid="kpi-subline">
+          {subLine}
+        </p>
+      )}
       {delta !== undefined && (
         <p className={`text-xs mt-1 ${positive ? 'text-[#DC9F85]' : 'text-[#B6A596]'}`}>
           {positive ? '↑' : '↓'} {Math.abs(delta)}% {deltaLabel}
