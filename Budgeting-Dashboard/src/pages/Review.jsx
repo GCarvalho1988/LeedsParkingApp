@@ -302,9 +302,9 @@ export default function Review() {
                     >Work</button>
                     <button
                       onClick={() => markDone(tx.id)}
-                      className="text-xs font-medium uppercase tracking-widest px-3 py-1.5 rounded border border-[#66473B] text-[#B6A596] hover:border-[#B6A596] transition-colors"
+                      className="text-xs font-medium px-3 py-1.5 rounded border border-[#66473B] text-[#B6A596] hover:border-[#B6A596] transition-colors"
                       style={{ fontFamily: "'Clash Grotesk', sans-serif" }}
-                    >Done</button>
+                    >✓</button>
                   </div>
                 </div>
               ))}

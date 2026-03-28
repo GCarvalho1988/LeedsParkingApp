@@ -35,7 +35,7 @@ describe('Review', () => {
     render(<Review />)
   })
 
-  it('shows Personal, Work, and Done buttons per transaction', async () => {
+  it('shows Personal, Work, and tick buttons per transaction', async () => {
     mockFrom.mockImplementation(table => {
       if (table === 'uploads') {
         return makeChain({
@@ -58,7 +58,7 @@ describe('Review', () => {
     await waitFor(() => expect(screen.getByText('Dinner')).toBeInTheDocument())
     expect(screen.getByText('Personal')).toBeInTheDocument()
     expect(screen.getByText('Work')).toBeInTheDocument()
-    expect(screen.getByText('Done')).toBeInTheDocument()
+    expect(screen.getByText('✓')).toBeInTheDocument()
   })
 
   it('shows "Tag all as reviewed" button in header', async () => {
