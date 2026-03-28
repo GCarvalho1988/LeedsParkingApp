@@ -94,7 +94,7 @@ export default function Overview() {
       const lastMo   = lastMoRow ? Math.round(Number(lastMoRow.total)) : null
       const delta    = lastMo ? Math.round(((thisMo - lastMo) / lastMo) * 100) : null
 
-      const last6 = periods.slice(-6).map(p => {
+      const last6 = periods.slice(Math.max(0, periodIndex - 5), periodIndex + 1).map(p => {
         const row = allCatData.find(d => d.period === p && d.category === r.category)
         return row ? Math.round(Number(row.total)) : 0
       })
