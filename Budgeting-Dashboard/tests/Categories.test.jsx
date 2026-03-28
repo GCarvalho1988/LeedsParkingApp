@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 
 beforeAll(() => {
   global.ResizeObserver = class { observe() {} unobserve() {} disconnect() {} }
@@ -50,9 +49,7 @@ describe('Categories', () => {
       error: null,
     })
     supabase.from.mockImplementation(table => {
-      if (table === 'income') {
-        return supabase._makeChain([{ category: 'Salary' }])
-      }
+      if (table === 'income') return supabase._makeChain([{ category: 'Salary' }])
       return supabase._makeChain([])
     })
     render(<Categories />)
@@ -61,7 +58,7 @@ describe('Categories', () => {
     expect(screen.getByText('Discretionary')).toBeInTheDocument()
   })
 
-  it('renders category cards in the correct sections', async () => {
+  it('renders category cards in correct sections', async () => {
     supabase.rpc.mockResolvedValue({
       data: [{ category: 'Groceries' }, { category: 'Mortgage' }],
       error: null,
@@ -74,5 +71,29 @@ describe('Categories', () => {
     await waitFor(() => expect(screen.getByText('Salary')).toBeInTheDocument())
     expect(screen.getByText('Mortgage')).toBeInTheDocument()
     expect(screen.getByText('Groceries')).toBeInTheDocument()
+  })
+
+  it('does not show bill categories under Income even when they appear in the income table', async () => {
+    // income table has Salary + a Mortgage refund (positive transaction)
+    supabase.rpc.mockResolvedValue({
+      data: [{ category: 'Mortgage' }],
+      error: null,
+    })
+    supabase.from.mockImplementation(table => {
+      if (table === 'income') {
+        return supabase._makeChain([
+          { category: 'Salary' },
+          { category: 'Mortgage' }, // refund — should NOT appear in Income section
+        ])
+      }
+      return supabase._makeChain([])
+    })
+    render(<Categories />)
+    await waitFor(() => expect(screen.getByText('Income')).toBeInTheDocument())
+    // Salary should appear
+    expect(screen.getByText('Salary')).toBeInTheDocument()
+    // Mortgage should appear only once (in Bills & Fixed from txCats, not doubled in Income)
+    const mortgageButtons = screen.getAllByText('Mortgage')
+    expect(mortgageButtons).toHaveLength(1)
   })
 })

@@ -22,19 +22,20 @@ export default function Categories() {
         supabase.rpc('get_distinct_categories'),
         supabase.from('income').select('category').order('category'),
       ])
-      const txCats  = (rpcResult.data ?? []).map(r => r.category)
-      const incCats = [...new Set((incResult.data ?? []).map(r => r.category))].sort()
-      const incSet  = new Set(incCats)
+      const txCats     = (rpcResult.data ?? []).map(r => r.category)
+      const incCats    = [...new Set((incResult.data ?? []).map(r => r.category))].sort()
+      const trueIncCats = incCats.filter(c => !BILLS_CATEGORIES.has(c) && !TRANSIENT_CATEGORIES.has(c))
+      const incSet      = new Set(trueIncCats)
 
       const built = [
-        { key: 'income',        label: 'Income',        categories: incCats },
+        { key: 'income',        label: 'Income',        categories: trueIncCats },
         { key: 'bills',         label: 'Bills & Fixed', categories: txCats.filter(c => !incSet.has(c) && BILLS_CATEGORIES.has(c)).sort() },
         { key: 'discretionary', label: 'Discretionary', categories: txCats.filter(c => !incSet.has(c) && bucketCategory(c) === 'discretionary').sort() },
         { key: 'transfers',     label: 'Transfers',     categories: txCats.filter(c => !incSet.has(c) && TRANSIENT_CATEGORIES.has(c)).sort() },
       ].filter(s => s.categories.length > 0)
 
       setSections(built)
-      const firstIncome  = incCats[0]
+      const firstIncome  = trueIncCats[0]
       const firstOverall = built[0]?.categories[0] ?? null
       setSelected(firstIncome ?? firstOverall)
       setLoading(false)
