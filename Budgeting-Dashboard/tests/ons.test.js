@@ -38,9 +38,7 @@ describe('fetchCpiRates', () => {
     })
     const rates = await fetchCpiRates()
     expect(rates).toEqual({ '2023': 6.7, '2024': 2.6 })
-    expect(global.fetch).toHaveBeenCalledWith(
-      'https://api.ons.gov.uk/v1/datasets/cpih01/timeseries/l522/data'
-    )
+    expect(global.fetch).toHaveBeenCalledWith('/.netlify/functions/ons-cpi')
   })
 
   it('throws on non-ok response', async () => {

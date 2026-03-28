@@ -1,5 +1,5 @@
 // src/lib/ons.js
-const ONS_URL = 'https://api.ons.gov.uk/v1/datasets/cpih01/timeseries/l522/data'
+const ONS_URL = '/.netlify/functions/ons-cpi'
 
 /**
  * Fetches CPIH 12-month annual rates from ONS API.
