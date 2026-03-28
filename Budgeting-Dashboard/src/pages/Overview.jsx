@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import KpiCard from '../components/KpiCard'
 import MonthlyTrendChart from '../components/MonthlyTrendChart'
-import DiscretionaryTreemap from '../components/DiscretionaryTreemap'
 import { bucketCategory } from '../lib/categories'
 import { nextPeriodBoundary, formatPeriodLabel } from '../lib/dateUtils'
 export { nextPeriodBoundary } from '../lib/dateUtils'
@@ -11,30 +10,55 @@ function formatGBP(n) {
   return `£${Number(n).toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
 }
 
+function Sparkline({ values }) {
+  if (!values || values.length < 2) return <span className="text-[#35211A]">—</span>
+  const max = Math.max(...values, 1)
+  const w = 64, h = 20
+  const pts = values
+    .map((v, i) => `${(i / (values.length - 1)) * w},${h - (v / max) * (h - 2) - 1}`)
+    .join(' ')
+  return (
+    <svg width={w} height={h} className="inline-block align-middle">
+      <polyline points={pts} fill="none" stroke="#DC9F85" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export default function Overview() {
   const [allCatData, setAllCatData]       = useState(null)
-  const [allIncomeData, setAllIncomeData] = useState(null)
+  const [salaryByPeriod, setSalaryByPeriod] = useState(null)
   const [periods, setPeriods]             = useState([])
   const [periodIndex, setPeriodIndex]     = useState(null)
 
   useEffect(() => {
     async function load() {
-      const [{ data: catData, error: catErr }, { data: incomeData, error: incomeErr }] = await Promise.all([
+      const [{ data: catData, error: catErr }, salaryResult] = await Promise.all([
         supabase.rpc('get_monthly_category_totals'),
-        supabase.rpc('get_monthly_income'),
+        supabase
+          .from('income')
+          .select('date, amount')
+          .eq('category', 'Salary')
+          .then(({ data, error }) => ({ data, error })),
       ])
-      if (catErr)    console.error('get_monthly_category_totals failed:', catErr.message)
-      if (incomeErr) console.error('get_monthly_income failed:', incomeErr.message)
+      if (catErr) console.error('get_monthly_category_totals failed:', catErr.message)
+      if (salaryResult.error) console.error('salary query failed:', salaryResult.error.message)
+
+      const salaryMap = {}
+      salaryResult.data?.forEach(r => {
+        const p = r.date.slice(0, 7)
+        salaryMap[p] = (salaryMap[p] || 0) + Number(r.amount)
+      })
+
       const ps = [...new Set((catData ?? []).map(r => r.period))].sort()
       setAllCatData(catData ?? [])
-      setAllIncomeData(incomeData ?? [])
+      setSalaryByPeriod(salaryMap)
       setPeriods(ps)
       setPeriodIndex(ps.length > 0 ? ps.length - 1 : null)
     }
     load()
   }, [])
 
-  const loading = allCatData === null || allIncomeData === null
+  const loading = allCatData === null || salaryByPeriod === null
   if (loading) return <div className="text-[#B6A596] py-8">Loading…</div>
   if (periods.length === 0) return <div className="text-[#B6A596] py-8">No data yet. Upload a CSV to get started.</div>
 
@@ -50,12 +74,12 @@ export default function Overview() {
 
   const bills         = sumBucket(periodRows, 'bills')
   const discretionary = sumBucket(periodRows, 'discretionary')
-  const income        = Number(allIncomeData.find(r => r.period === period)?.total ?? 0)
+  const income        = Number(salaryByPeriod[period] ?? 0)
   const cashflow      = income - bills - discretionary
 
   const prevBills         = sumBucket(prevRows, 'bills')
   const prevDiscretionary = sumBucket(prevRows, 'discretionary')
-  const prevIncome        = Number(allIncomeData.find(r => r.period === prevPeriod)?.total ?? 0)
+  const prevIncome        = Number(salaryByPeriod[prevPeriod] ?? 0)
 
   function pctDelta(cur, prev) {
     if (!prev) return undefined
@@ -64,17 +88,28 @@ export default function Overview() {
 
   const discretionaryItems = periodRows
     .filter(r => bucketCategory(r.category) === 'discretionary')
-    .map(r => ({ name: r.category, size: Math.round(Number(r.total)) }))
-    .sort((a, b) => b.size - a.size)
+    .map(r => {
+      const thisMo   = Math.round(Number(r.total))
+      const lastMoRow = prevRows.find(p => p.category === r.category)
+      const lastMo   = lastMoRow ? Math.round(Number(lastMoRow.total)) : null
+      const delta    = lastMo ? Math.round(((thisMo - lastMo) / lastMo) * 100) : null
 
-  const discretionaryTotal = discretionaryItems.reduce((s, i) => s + i.size, 0)
+      const last6 = periods.slice(-6).map(p => {
+        const row = allCatData.find(d => d.period === p && d.category === r.category)
+        return row ? Math.round(Number(row.total)) : 0
+      })
 
-  // Cumulative cashflow trend across all periods
+      return { name: r.category, thisMo, lastMo, delta, last6 }
+    })
+    .sort((a, b) => b.thisMo - a.thisMo)
+
+  const discretionaryTotal = discretionaryItems.reduce((s, i) => s + i.thisMo, 0)
+
   let cumulative = 0
   const cashflowTrend = periods.map(p => {
     const rows  = allCatData.filter(r => r.period === p)
     const spend = sumBucket(rows, 'bills') + sumBucket(rows, 'discretionary')
-    const inc   = Number(allIncomeData.find(r => r.period === p)?.total ?? 0)
+    const inc   = Number(salaryByPeriod[p] ?? 0)
     cumulative += inc - spend
     const [y, m] = p.split('-')
     const label  = new Date(Number(y), Number(m) - 1).toLocaleDateString('en-GB', { month: 'short', year: '2-digit' })
@@ -130,7 +165,7 @@ export default function Overview() {
         />
       </div>
 
-      {/* Discretionary Breakdown: total + treemap + sorted list */}
+      {/* Discretionary Breakdown table */}
       {discretionaryItems.length > 0 && (
         <div className="border border-[#66473B] rounded p-5">
           <div className="flex items-baseline justify-between mb-4">
@@ -144,15 +179,41 @@ export default function Overview() {
               {formatGBP(discretionaryTotal)}
             </span>
           </div>
-          <DiscretionaryTreemap data={discretionaryItems} />
-          <div className="mt-4 space-y-1.5">
-            {discretionaryItems.map(item => (
-              <div key={item.name} className="flex items-center justify-between text-xs">
-                <span className="text-[#B6A596]">{item.name}</span>
-                <span className="text-[#EBDCC4] tabular-nums">{formatGBP(item.size)}</span>
-              </div>
-            ))}
-          </div>
+          <table className="w-full">
+            <thead>
+              <tr>
+                <th className="text-left text-xs text-[#66473B] font-medium pb-2 uppercase tracking-widest">Category</th>
+                <th className="text-right text-xs text-[#66473B] font-medium pb-2 uppercase tracking-widest">Last month</th>
+                <th className="text-right text-xs text-[#66473B] font-medium pb-2 uppercase tracking-widest">This month</th>
+                <th className="text-right text-xs text-[#66473B] font-medium pb-2 uppercase tracking-widest">Δ</th>
+                <th className="text-right text-xs text-[#66473B] font-medium pb-2 uppercase tracking-widest">6M</th>
+              </tr>
+            </thead>
+            <tbody>
+              {discretionaryItems.map(item => (
+                <tr key={item.name} className="border-t border-[#35211A]">
+                  <td className="py-2 text-xs text-[#EBDCC4]">{item.name}</td>
+                  <td className="py-2 text-xs text-right text-[#B6A596] tabular-nums">
+                    {item.lastMo !== null ? formatGBP(item.lastMo) : <span className="text-[#35211A]">—</span>}
+                  </td>
+                  <td className="py-2 text-xs text-right text-[#EBDCC4] font-medium tabular-nums">
+                    {formatGBP(item.thisMo)}
+                  </td>
+                  <td className={`py-2 text-xs text-right font-medium tabular-nums ${
+                    item.delta > 0 ? 'text-[#DC9F85]' : item.delta < 0 ? 'text-[#B6A596]' : 'text-[#66473B]'
+                  }`}>
+                    {item.delta !== null && item.delta !== 0
+                      ? `${item.delta > 0 ? '+' : ''}${item.delta}%`
+                      : <span className="text-[#35211A]">—</span>
+                    }
+                  </td>
+                  <td className="py-2 text-right pl-3">
+                    <Sparkline values={item.last6} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 

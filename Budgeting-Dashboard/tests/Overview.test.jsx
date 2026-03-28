@@ -12,16 +12,21 @@ vi.mock('../src/lib/supabase', () => {
 import Overview from '../src/pages/Overview'
 import { supabase } from '../src/lib/supabase'
 
+function makeFromChain(resolveData = []) {
+  return {
+    select: vi.fn().mockReturnThis(),
+    eq:     vi.fn().mockReturnThis(),
+    not:    vi.fn().mockReturnThis(),
+    gte:    vi.fn().mockReturnThis(),
+    lt:     vi.fn().mockReturnThis(),
+    then:   vi.fn(cb => Promise.resolve(cb({ data: resolveData }))),
+  }
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
   supabase.rpc.mockReturnValue(new Promise(() => {}))
-  supabase.from.mockReturnValue({
-    select: vi.fn().mockReturnThis(),
-    not: vi.fn().mockReturnThis(),
-    gte: vi.fn().mockReturnThis(),
-    lt: vi.fn().mockReturnThis(),
-    then: vi.fn().mockImplementation(cb => { cb({ data: [] }); return Promise.resolve() }),
-  })
+  supabase.from.mockReturnValue(makeFromChain())
 })
 
 describe('Overview', () => {
@@ -32,28 +37,25 @@ describe('Overview', () => {
 
   it('shows empty state when no category data', async () => {
     supabase.rpc.mockResolvedValue({ data: [], error: null })
+    supabase.from.mockReturnValue(makeFromChain([]))
     render(<Overview />)
     await waitFor(() =>
       expect(screen.getByText(/no data yet/i)).toBeInTheDocument()
     )
   })
 
-  it('renders Bills, Discretionary, Income, Cashflow cards — no Transfers', async () => {
-    supabase.rpc.mockImplementation((name) => {
-      if (name === 'get_monthly_category_totals') {
-        return Promise.resolve({
-          data: [
-            { period: '2025-01', category: 'Mortgage', total: 1200 },
-            { period: '2025-01', category: 'Groceries', total: 300 },
-          ],
-          error: null,
-        })
-      }
-      if (name === 'get_monthly_income') {
-        return Promise.resolve({ data: [{ period: '2025-01', total: 4000 }], error: null })
-      }
-      return Promise.resolve({ data: [], error: null })
+  it('renders Bills, Discretionary, Income, Cashflow cards after load', async () => {
+    supabase.rpc.mockResolvedValue({
+      data: [
+        { period: '2025-01', category: 'Mortgage', total: 1200 },
+        { period: '2025-01', category: 'Groceries', total: 300 },
+      ],
+      error: null,
     })
+    // Salary query via from('income')
+    supabase.from.mockReturnValue(
+      makeFromChain([{ date: '2025-01-25', amount: 4000 }])
+    )
     render(<Overview />)
     await waitFor(() => expect(screen.getByText('Bills & Fixed')).toBeInTheDocument())
     expect(screen.getByText('Discretionary')).toBeInTheDocument()
