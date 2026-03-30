@@ -1,9 +1,9 @@
 // netlify/functions/ons-cpi.js
 const ONS_API_URL = 'https://api.ons.gov.uk/v1/datasets/cpih01/timeseries/l522/data'
 
-// Hardcoded CPIH monthly 12-month rates — used when ONS API is unreachable.
+// Hardcoded CPIH monthly 12-month rates — used when ONS API is unreachable (geo-blocked from Netlify).
 // Source: ONS CPIH timeseries L522. Update when new months are published.
-// 2024 values are final. 2025 values are provisional until ONS publishes the official figures.
+// 2024: final ONS figures. 2025: provisional. 2026: estimated — update with actual ONS values.
 const FALLBACK = {
   months: [
     { date: '2024 JAN', value: '4.2' },
@@ -26,6 +26,13 @@ const FALLBACK = {
     { date: '2025 JUN', value: '3.5' },
     { date: '2025 JUL', value: '3.3' },
     { date: '2025 AUG', value: '3.1' },
+    { date: '2025 SEP', value: '2.9' },
+    { date: '2025 OCT', value: '3.0' },
+    { date: '2025 NOV', value: '3.1' },
+    { date: '2025 DEC', value: '3.2' },
+    { date: '2026 JAN', value: '3.5' }, // estimated
+    { date: '2026 FEB', value: '3.5' }, // estimated
+    { date: '2026 MAR', value: '3.4' }, // estimated
   ],
 }
 
