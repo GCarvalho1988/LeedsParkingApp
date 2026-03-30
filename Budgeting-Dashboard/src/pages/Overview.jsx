@@ -266,6 +266,22 @@ export default function Overview() {
                 </tr>
               ))}
             </tbody>
+            {breakdownItems.length > 1 && (
+              <tfoot>
+                <tr className="border-t-2 border-[#66473B]">
+                  <td className="pt-2 text-xs text-[#66473B] uppercase tracking-widest font-semibold" style={{ fontFamily: "'Clash Grotesk', sans-serif" }}>Total</td>
+                  <td className="pt-2 text-xs text-right text-[#B6A596] font-semibold tabular-nums">
+                    {breakdownItems.some(i => i.lastMo !== null)
+                      ? formatGBP(breakdownItems.reduce((s, i) => s + (i.lastMo ?? 0), 0))
+                      : <span className="text-[#35211A]">—</span>}
+                  </td>
+                  <td className="pt-2 text-xs text-right text-[#EBDCC4] font-bold tabular-nums">
+                    {formatGBP(breakdownTotal)}
+                  </td>
+                  <td colSpan={2} />
+                </tr>
+              </tfoot>
+            )}
           </table>
         )}
       </div>
