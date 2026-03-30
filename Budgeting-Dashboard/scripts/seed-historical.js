@@ -15,20 +15,20 @@ export function normaliseExcelRow(row) {
     throw new Error(`Missing required column in row: ${JSON.stringify(row)}`)
   }
 
-  const amount = parseFloat(String(row[AMT_COL]).replace(/[^0-9.-]/g, ''))
-  if (isNaN(amount)) throw new Error(`Invalid amount in row: ${JSON.stringify(row)}`)
-  if (amount > 0) throw new Error(`Skipping income/refund row: ${JSON.stringify(row)}`)
-  if (amount === 0) throw new Error(`Skipping zero-amount row: ${JSON.stringify(row)}`)
+  const rawAmount = parseFloat(String(row[AMT_COL]).replace(/[^0-9.-]/g, ''))
+  if (isNaN(rawAmount)) throw new Error(`Invalid amount in row: ${JSON.stringify(row)}`)
+  if (rawAmount === 0)  throw new Error(`Skipping zero-amount row: ${JSON.stringify(row)}`)
 
   // Convert Excel serial date (days since 1899-12-30) to ISO string
   const serial = row[DATE_COL]
   const date = new Date((serial - 25569) * 86400 * 1000)
   const isoDate = date.toISOString().split('T')[0]
 
+  // CSV negative = expense → stored positive; CSV positive = credit → stored negative
   return {
     date: isoDate,
     description: String(row[DESC_COL]).trim(),
-    amount: Math.abs(amount),
+    amount: rawAmount < 0 ? Math.abs(rawAmount) : -rawAmount,
     category: String(row[CAT_COL]).trim(),
   }
 }
@@ -36,9 +36,11 @@ export function normaliseExcelRow(row) {
 // --- Main seeder (run directly) ---
 
 async function seed() {
-  const EXCEL_PATH = process.argv[2]
+  const args      = process.argv.slice(2)
+  const force     = args.includes('--force')
+  const EXCEL_PATH = args.find(a => !a.startsWith('--'))
   if (!EXCEL_PATH) {
-    console.error('Usage: node scripts/seed-historical.js <path-to-excel.xlsx>')
+    console.error('Usage: node scripts/seed-historical.js <path-to-excel.xlsx> [--force]')
     process.exit(1)
   }
 
@@ -77,8 +79,13 @@ async function seed() {
       // Check if already seeded
       const { data: existing } = await supabase.from('uploads').select('id').eq('period', period).single()
       if (existing) {
-        console.log(`  ${period} — already seeded, skipping`)
-        continue
+        if (!force) {
+          console.log(`  ${period} — already seeded, skipping`)
+          continue
+        }
+        // --force: delete existing transactions and upload record, then re-seed
+        await supabase.from('transactions').delete().eq('upload_id', existing.id)
+        await supabase.from('uploads').delete().eq('id', existing.id)
       }
 
       // Create upload record
