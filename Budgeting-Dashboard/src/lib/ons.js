@@ -1,30 +1,36 @@
 // src/lib/ons.js
 const ONS_URL = '/.netlify/functions/ons-cpi'
 
+const MONTH_ABBR = {
+  JAN: '01', FEB: '02', MAR: '03', APR: '04', MAY: '05', JUN: '06',
+  JUL: '07', AUG: '08', SEP: '09', OCT: '10', NOV: '11', DEC: '12',
+}
+
 /**
- * Fetches CPIH 12-month annual rates from ONS API.
- * Returns { "2023": 6.7, "2024": 2.6, ... }
+ * Fetches CPIH monthly 12-month rates from ONS API.
+ * Returns { "2026-01": 3.7, "2025-12": 3.5, ... }
+ * The 12-month rate for a given period is the year-on-year inflation for that calendar month.
  */
 export async function fetchCpiRates() {
   const res = await fetch(ONS_URL)
   if (!res.ok) throw new Error(`ONS API failed: ${res.status}`)
   const json = await res.json()
   const rates = {}
-  json.annual?.forEach(({ date, value }) => {
-    rates[date] = parseFloat(value)
+  json.months?.forEach(({ date, value }) => {
+    // ONS date format: "2026 JAN"
+    const [year, mon] = date.split(' ')
+    const mm = MONTH_ABBR[mon]
+    if (mm) rates[`${year}-${mm}`] = parseFloat(value)
   })
   return rates
 }
 
 /**
- * Adjusts `amount` from `fromYear` to `toYear` using CPI rates.
- * Compounds annual rates. Returns amount unchanged if fromYear >= toYear.
+ * Adjusts `amount` from py-month prices to cy-month prices using the monthly 12-month CPIH rate.
+ * cyPeriod: "YYYY-MM" string for the corresponding month in the current year (e.g. "2026-01").
+ * The 12-month rate is already the year-on-year ratio — apply it directly.
+ * Returns amount unchanged if the rate is unavailable (factor = 1).
  */
-export function cpiAdjust(amount, fromYear, toYear, rates) {
-  if (fromYear >= toYear) return amount
-  let factor = 1
-  for (let y = fromYear + 1; y <= toYear; y++) {
-    factor *= 1 + (rates[String(y)] ?? 0) / 100
-  }
-  return amount * factor
+export function cpiAdjustMonth(amount, cyPeriod, rates) {
+  return amount * (1 + (rates[cyPeriod] ?? 0) / 100)
 }

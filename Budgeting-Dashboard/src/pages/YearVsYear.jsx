@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { bucketCategory } from '../lib/categories'
-import { fetchCpiRates, cpiAdjust } from '../lib/ons'
+import { fetchCpiRates, cpiAdjustMonth } from '../lib/ons'
 
 function formatGBP(n) {
   return `£${Number(n).toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
@@ -77,22 +77,38 @@ export default function YearVsYear() {
       .map(r => r.period.split('-')[1])
   )
 
-  // Build byCatYear — prev year only counted for months also in current year
+  // Month range label for category table headers (e.g. "Jan–Mar")
+  const sortedCyMonthNums = [...cyMonths].map(Number).sort((a, b) => a - b)
+  const monthRangeStr = sortedCyMonthNums.length === 0
+    ? ''
+    : sortedCyMonthNums[0] === sortedCyMonthNums[sortedCyMonthNums.length - 1]
+      ? MONTHS[sortedCyMonthNums[0] - 1]
+      : `${MONTHS[sortedCyMonthNums[0] - 1]}–${MONTHS[sortedCyMonthNums[sortedCyMonthNums.length - 1] - 1]}`
+
+  // Build byCatYear — prev year only counted for months also in current year.
+  // If inflationAdj, each py period is inflated to cy prices using that month's 12-month rate.
   const byCatYear = {}
   allData.forEach(({ period, category, total }) => {
     const [y, m] = period.split('-')
     const yr = Number(y)
     if (yr === py && !cyMonths.has(m)) return
+    let amount = Number(total)
+    if (inflationAdj && yr === py) {
+      amount = cpiAdjustMonth(amount, `${cy}-${m}`, cpiRates)
+    }
     const key = `${category}|${yr}`
-    byCatYear[key] = (byCatYear[key] || 0) + Number(total)
+    byCatYear[key] = (byCatYear[key] || 0) + amount
   })
 
   const monthRows = MONTHS.map((label, i) => {
-    const mo       = i + 1
-    const cur      = byYearMonth[cy]?.[mo] ?? null
-    const rawPrev  = byYearMonth[py]?.[mo] ?? null
-    const prev     = inflationAdj && rawPrev !== null ? Math.round(cpiAdjust(rawPrev, py, cy, cpiRates)) : rawPrev
-    const delta    = cur !== null && prev !== null ? Math.round(((cur - prev) / prev) * 100) : null
+    const mo      = i + 1
+    const mm      = String(mo).padStart(2, '0')
+    const cur     = byYearMonth[cy]?.[mo] ?? null
+    const rawPrev = byYearMonth[py]?.[mo] ?? null
+    const prev    = inflationAdj && rawPrev !== null
+      ? Math.round(cpiAdjustMonth(rawPrev, `${cy}-${mm}`, cpiRates))
+      : rawPrev
+    const delta   = cur !== null && prev !== null ? Math.round(((cur - prev) / prev) * 100) : null
     return { label, cur, prev, delta }
   })
 
@@ -105,10 +121,9 @@ export default function YearVsYear() {
   const categories = [...new Set(Object.keys(byCatYear).map(k => k.split('|')[0]))].sort()
 
   const catRows = categories.map(cat => {
-    const cur     = byCatYear[`${cat}|${cy}`] ?? null
-    const rawPrev = byCatYear[`${cat}|${py}`] ?? null
-    const prev    = inflationAdj && rawPrev !== null ? Math.round(cpiAdjust(rawPrev, py, cy, cpiRates)) : rawPrev
-    const delta   = prev !== null && prev > 0 ? Math.round(((cur - prev) / prev) * 100) : null
+    const cur   = byCatYear[`${cat}|${cy}`] ?? null
+    const prev  = byCatYear[`${cat}|${py}`] != null ? Math.round(byCatYear[`${cat}|${py}`]) : null
+    const delta = prev !== null && prev > 0 ? Math.round(((cur - prev) / prev) * 100) : null
     return { cat, cur, prev, delta }
   }).sort((a, b) => (b.cur ?? 0) - (a.cur ?? 0))
 
@@ -149,6 +164,14 @@ export default function YearVsYear() {
           >
             CPI adjusted
           </span>
+          {inflationAdj && (() => {
+            const covered = sortedCyMonthNums.filter(m => cpiRates[`${cy}-${String(m).padStart(2,'0')}`] !== undefined)
+            if (covered.length === sortedCyMonthNums.length) return null
+            const note = covered.length === 0
+              ? `no ${cy} CPI data`
+              : `CPI through ${MONTHS[covered[covered.length - 1] - 1]}`
+            return <span className="text-xs text-[#DC9F85]">({note})</span>
+          })()}
         </label>
       </div>
 
@@ -209,7 +232,7 @@ export default function YearVsYear() {
             className="text-xs font-semibold text-[#B6A596] uppercase tracking-widest"
             style={{ fontFamily: "'Clash Grotesk', sans-serif" }}
           >
-            By Category: {py}{inflationAdj ? ' (adj)' : ''} vs {cy}
+            By Category: {monthRangeStr} {py}{inflationAdj ? ' (adj)' : ''} vs {monthRangeStr} {cy}
           </h2>
         </div>
         <div className="overflow-x-auto">
@@ -217,8 +240,8 @@ export default function YearVsYear() {
             <thead className="bg-[#1a1a1a]">
               <tr>
                 <TH>Category</TH>
-                <TH right>{py}{inflationAdj ? ' (adj)' : ''}</TH>
-                <TH right>{cy}</TH>
+                <TH right>{monthRangeStr} {py}{inflationAdj ? ' (adj)' : ''}</TH>
+                <TH right>{monthRangeStr} {cy}</TH>
                 <TH right>Change</TH>
               </tr>
             </thead>
