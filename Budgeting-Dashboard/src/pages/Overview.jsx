@@ -75,7 +75,7 @@ export default function Overview() {
   const prevIncome        = sumBucket(prevRows, 'income')
 
   function pctDelta(cur, prev) {
-    if (!prev) return undefined
+    if (!prev || prev <= 0) return undefined
     return Math.round(((cur - prev) / prev) * 100)
   }
 

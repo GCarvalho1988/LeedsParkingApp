@@ -9,7 +9,23 @@ function displayAmount(amount, category) {
 import MonthlyTrendChart from '../components/MonthlyTrendChart'
 
 function formatGBP(n) {
-  return `£${Number(n).toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+  const safe = n === 0 ? 0 : n  // coerce -0 to +0 before formatting
+  return `£${Number(safe).toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+}
+
+// Fetch all rows from a Supabase query, paginating in blocks of 1000
+async function fetchAllRows(buildQuery) {
+  const PAGE = 1000
+  let all = []
+  let from = 0
+  while (true) {
+    const { data, error } = await buildQuery(from, from + PAGE - 1)
+    if (error || !data || data.length === 0) break
+    all = [...all, ...data]
+    if (data.length < PAGE) break
+    from += PAGE
+  }
+  return all
 }
 
 export default function Categories() {
@@ -46,14 +62,16 @@ export default function Categories() {
   useEffect(() => {
     if (!selected) return
     async function load() {
-      const { data } = await supabase
-        .from('transactions')
-        .select('date, amount, description')
-        .eq('category', selected)
-        .order('date', { ascending: false })
-        .limit(10000)
+      const data = await fetchAllRows((from, to) =>
+        supabase
+          .from('transactions')
+          .select('id, date, amount, description')
+          .eq('category', selected)
+          .order('date', { ascending: false })
+          .range(from, to)
+      )
 
-      const combined = (data ?? []).sort((a, b) => b.date.localeCompare(a.date))
+      const combined = data.sort((a, b) => b.date.localeCompare(a.date))
       setTransactions(combined)
 
       const monthMap = {}
@@ -162,7 +180,7 @@ export default function Categories() {
             <div>
               {transactions.map(tx => (
                 <div
-                  key={tx.date + tx.description + tx.amount}
+                  key={tx.id}
                   className="px-5 py-3 flex justify-between text-sm border-b border-[#35211A] last:border-0"
                 >
                   <div>

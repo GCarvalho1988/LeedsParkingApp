@@ -1,6 +1,9 @@
 // src/lib/categories.js
 
-export const INCOME_CATEGORIES = new Set(['Income', 'Interest Earnings'])
+export const INCOME_CATEGORIES = new Set(['Income', 'Interest earnings', 'Salary'])
+
+// Categories shown as pending in the Review page (excludes pre-tagged Dulce Personal/Work)
+export const REVIEW_PENDING_CATEGORIES = ['Clothing & shoes', 'General merchandise']
 
 export const BILLS_CATEGORIES = new Set([
   'Car Repayments',

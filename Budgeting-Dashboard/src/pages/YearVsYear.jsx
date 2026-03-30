@@ -111,7 +111,7 @@ export default function YearVsYear() {
     const prev    = inflationAdj && rawPrev !== null
       ? Math.round(cpiAdjustToLatest(rawPrev, py, cpiRates))
       : rawPrev
-    const delta   = cur !== null && prev !== null ? Math.round(((cur - prev) / prev) * 100) : null
+    const delta   = cur !== null && prev !== null && prev > 0 ? Math.round(((cur - prev) / prev) * 100) : null
     return { label, cur, prev, delta }
   })
 
@@ -126,7 +126,7 @@ export default function YearVsYear() {
   const catRows = categories.map(cat => {
     const cur   = byCatYear[`${cat}|${cy}`] ?? null
     const prev  = byCatYear[`${cat}|${py}`] != null ? Math.round(byCatYear[`${cat}|${py}`]) : null
-    const delta = prev !== null && prev > 0 ? Math.round(((cur - prev) / prev) * 100) : null
+    const delta = prev !== null && prev > 0 && cur !== null && cur > 0 ? Math.round(((cur - prev) / prev) * 100) : null
     return { cat, cur, prev, delta }
   }).sort((a, b) => (b.cur ?? 0) - (a.cur ?? 0))
 
@@ -251,10 +251,18 @@ export default function YearVsYear() {
                 <tr key={r.cat} className={`border-b border-[#35211A] last:border-0 ${idx % 2 === 1 ? 'bg-white/[0.02]' : ''}`}>
                   <td className="px-5 py-2.5 text-[#EBDCC4]">{r.cat}</td>
                   <td className="px-5 py-2.5 text-right text-[#B6A596]">
-                    {r.prev !== null ? formatGBP(r.prev) : <span className="text-[#35211A]">—</span>}
+                    {r.prev !== null
+                      ? r.prev < 0
+                        ? <span className="text-[#66473B]">+{formatGBP(Math.abs(r.prev))}</span>
+                        : formatGBP(r.prev)
+                      : <span className="text-[#35211A]">—</span>}
                   </td>
-                  <td className="px-5 py-2.5 text-right text-[#EBDCC4] font-medium">
-                    {r.cur !== null ? formatGBP(r.cur) : <span className="text-[#35211A]">—</span>}
+                  <td className="px-5 py-2.5 text-right font-medium">
+                    {r.cur !== null
+                      ? r.cur < 0
+                        ? <span className="text-[#66473B]">+{formatGBP(Math.abs(r.cur))}</span>
+                        : <span className="text-[#EBDCC4]">{formatGBP(r.cur)}</span>
+                      : <span className="text-[#35211A]">—</span>}
                   </td>
                   <DeltaCell delta={r.delta} />
                 </tr>

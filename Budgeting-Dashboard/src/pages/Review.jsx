@@ -106,7 +106,8 @@ export default function Review() {
           tag: t.category === 'Dulce Personal Purchases' ? 'personal' : 'work',
         }))
 
-      const pendingTxs = txs.filter(t => !ALREADY_TAGGED.includes(t.category))
+      const dismissed = new Set(JSON.parse(localStorage.getItem('budgetdash-dismissed') || '[]'))
+      const pendingTxs = txs.filter(t => !ALREADY_TAGGED.includes(t.category) && !dismissed.has(t.id))
 
       setPending(sortTransactions(pendingTxs))
       setTagged(preTagged)
@@ -115,6 +116,8 @@ export default function Review() {
   }, [period])
 
   function dismiss(tx) {
+    const existing = JSON.parse(localStorage.getItem('budgetdash-dismissed') || '[]')
+    localStorage.setItem('budgetdash-dismissed', JSON.stringify([...new Set([...existing, tx.id])]))
     setPending(prev => prev.filter(t => t.id !== tx.id))
   }
 
@@ -235,7 +238,7 @@ export default function Review() {
                   <p className="text-xs text-[#66473B] mt-0.5">{tx.date} · <span className="text-[#B6A596]">{tx.category}</span></p>
                 </div>
                 <p className={`text-sm font-medium shrink-0 ${Number(tx.amount) < 0 ? 'text-[#B6A596]' : 'text-[#EBDCC4]'}`}>
-                  {Number(tx.amount) < 0 ? '+' : ''}{formatGBP(Math.abs(Number(tx.amount)))}
+                  {Number(tx.amount) < 0 ? '+' : '−'}{formatGBP(Math.abs(Number(tx.amount)))}
                 </p>
                 <div className="relative shrink-0">
                   <button
@@ -294,7 +297,7 @@ export default function Review() {
                   <p className="text-xs text-[#66473B] mt-0.5">{tx.date} · <span className="text-[#B6A596]">{tx.category}</span></p>
                 </div>
                 <p className={`text-sm font-medium shrink-0 ${Number(tx.amount) < 0 ? 'text-[#B6A596]' : 'text-[#EBDCC4]'}`}>
-                  {Number(tx.amount) < 0 ? '+' : ''}{formatGBP(Math.abs(Number(tx.amount)))}
+                  {Number(tx.amount) < 0 ? '+' : '−'}{formatGBP(Math.abs(Number(tx.amount)))}
                 </p>
                 <div className="flex gap-2 shrink-0">
                   <button

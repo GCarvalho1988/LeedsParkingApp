@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import CsvUploader from './CsvUploader'
 import Logo from './Logo'
 import { supabase } from '../lib/supabase'
-import { BILLS_CATEGORIES, TRANSIENT_CATEGORIES } from '../lib/categories'
+import { REVIEW_PENDING_CATEGORIES } from '../lib/categories'
 import { nextPeriodBoundary } from '../lib/dateUtils'
 
 const tabs = [
@@ -33,13 +33,12 @@ export default function Navbar() {
       const latestPeriod = uploads?.[0]?.period
       if (!latestPeriod) return
 
-      const excluded = [...BILLS_CATEGORIES, ...TRANSIENT_CATEGORIES]
       const { count } = await supabase
         .from('transactions')
         .select('id', { count: 'exact', head: true })
         .gte('date', `${latestPeriod}-01`)
         .lt('date', nextPeriodBoundary(latestPeriod))
-        .not('category', 'in', `(${excluded.map(c => `"${c}"`).join(',')})`)
+        .in('category', REVIEW_PENDING_CATEGORIES)
 
       setReviewCount(count ?? 0)
     }

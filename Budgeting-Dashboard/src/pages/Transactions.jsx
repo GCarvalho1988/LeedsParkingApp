@@ -72,11 +72,21 @@ export default function Transactions() {
 
   useEffect(() => {
     async function load() {
-      const { data: tx } = await supabase
-        .from('transactions')
-        .select('id, date, description, amount, category')
-        .order('date', { ascending: false })
-        .limit(10000)
+      // Paginate to bypass Supabase's 1000-row server cap
+      let tx = []
+      let offset = 0
+      const PAGE = 1000
+      while (true) {
+        const { data, error } = await supabase
+          .from('transactions')
+          .select('id, date, description, amount, category')
+          .order('date', { ascending: false })
+          .range(offset, offset + PAGE - 1)
+        if (error || !data || data.length === 0) break
+        tx = [...tx, ...data]
+        if (data.length < PAGE) break
+        offset += PAGE
+      }
 
       const { data: flagData } = await supabase
         .from('flags')
@@ -201,7 +211,7 @@ export default function Transactions() {
                     )}
                   </td>
                   <td className={`px-5 py-3 text-right font-medium tabular-nums ${Number(tx.amount) < 0 ? 'text-[#B6A596]' : 'text-[#EBDCC4]'}`}>
-                    {Number(tx.amount) < 0 ? '+' : ''}{formatGBP(Math.abs(Number(tx.amount)))}
+                    {Number(tx.amount) < 0 ? '+' : '−'}{formatGBP(Math.abs(Number(tx.amount)))}
                   </td>
                   <td className="px-5 py-3 text-right">
                     <CommentButton transactionId={tx.id} existingFlags={flags[tx.id] || []} />
