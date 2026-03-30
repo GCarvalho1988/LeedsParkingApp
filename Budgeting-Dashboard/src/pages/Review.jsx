@@ -337,6 +337,7 @@ export default function Review() {
                 <th className="pb-2 text-xs text-[#66473B] text-left font-normal"></th>
                 <th className="pb-2 text-xs text-[#66473B] text-right font-normal">Spend</th>
                 <th className="pb-2 text-xs text-[#66473B] text-right font-normal pl-4">Transferred in</th>
+                <th className="pb-2 text-xs text-[#66473B] text-right font-normal pl-4">Delta</th>
                 <th></th>
               </tr>
             </thead>
@@ -349,6 +350,9 @@ export default function Review() {
                   </td>
                   <td className="py-2 text-xs text-right font-medium text-[#B6A596] tabular-nums pl-4">
                     {personalIn > 0 ? formatGBP(personalIn) : <span className="text-[#35211A]">—</span>}
+                  </td>
+                  <td className="py-2 text-xs text-right font-medium tabular-nums pl-4">
+                    {(() => { const d = personalSpend - personalIn; return d === 0 ? <span className="text-[#66473B]">—</span> : <span className={d > 0 ? 'text-[#DC9F85]' : 'text-[#B6A596]'}>{d > 0 ? '−' : '+'}{formatGBP(Math.abs(d))}</span> })()}
                   </td>
                   <td className="py-2 text-right pl-4">
                     {claim?.personal_actioned_at ? (
@@ -371,6 +375,9 @@ export default function Review() {
                   </td>
                   <td className="py-2 text-xs text-right font-medium text-[#B6A596] tabular-nums pl-4">
                     {workIn > 0 ? formatGBP(workIn) : <span className="text-[#35211A]">—</span>}
+                  </td>
+                  <td className="py-2 text-xs text-right font-medium tabular-nums pl-4">
+                    {(() => { const d = workSpend - workIn; return d === 0 ? <span className="text-[#66473B]">—</span> : <span className={d > 0 ? 'text-[#DC9F85]' : 'text-[#B6A596]'}>{d > 0 ? '−' : '+'}{formatGBP(Math.abs(d))}</span> })()}
                   </td>
                   <td className="py-2 text-right pl-4">
                     {claim?.work_actioned_at ? (
