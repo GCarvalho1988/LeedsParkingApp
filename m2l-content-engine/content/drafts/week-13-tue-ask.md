@@ -11,15 +11,13 @@ title: "Five days"
 
 Five days.
 
-On Sunday morning I'll be on a start line in Manchester. On Sunday evening I'll be somewhere outside London, either finished or very close to it.
+Sunday morning I'll be on a start line in Manchester. Sunday evening I'll be somewhere outside London, either finished or very close to it.
 
 200 miles. 28 June. For Ambitious about Autism.
 
 If you haven't donated and you were going to — please do it today. Not because the deadline creates artificial urgency, but because hitting £1,000 before I start matters to me more than hitting it after.
 
-The link is in the first comment.
-
-And if you want to follow the ride on the day — I'll post when I can.
+Link in the first comment. And if you want to follow the ride on the day — I'll post when I can.
 
 ---
 

@@ -11,15 +11,15 @@ title: "Two weeks out"
 
 Two weeks.
 
-Everything is where it needs to be. The route is planned. The bike is serviced. The bag is half-packed. The legs are rested and starting to feel restless, which I'm told is normal.
+Route is planned. Bike is serviced. Bag is half-packed. The legs feel restless, which I'm told means they're ready.
 
-I've spent 12 weeks restructuring my weekends, my eating, and my sleep around a single Sunday in June. It's a strange thing to do when you write it down. It'll be over in about 13 hours. Then it'll just be something that happened.
+12 weeks of restructuring weekends, eating, and sleep around a single Sunday in June. Strange thing to do when you write it down. It'll be over in about 13 hours. Then it's just something that happened.
 
-But it's also clarifying. You know exactly what you're doing and why you're doing it.
+But it does something to your focus. You know exactly what you're doing, and you know exactly why you're doing it.
 
 The why is Ambitious about Autism. The what is 200 miles. The when is 28 June.
 
-If there's someone in your network who might donate or share — this is the two-week window to put it in front of them.
+If there's someone in your network who might donate or share — the two-week window is the moment to put it in front of them.
 
 Fundraising link in the first comment.
 

@@ -11,15 +11,13 @@ title: "Last proper ask before the ride"
 
 This is the last proper ask before the ride.
 
-I don't want to cross the start line in Manchester at £800. I want to cross it at £1,000.
+I don't want to cross the start line in Manchester at [X]. I want to cross it at £1,000.
 
 That's it. That's the ask.
 
 The charity is Ambitious about Autism. The cause is practical, measurable, and worth backing. The ride is in 10 days.
 
-If you've been meaning to donate, this is the moment.
-
-If you've already donated — thank you. Genuinely. You can still help by sharing the link below with someone who hasn't.
+If you've been meaning to donate, this is the moment. If you've already donated — thank you, genuinely — you can still help by sharing the link with someone who hasn't.
 
 Fundraising link in the first comment.
 
@@ -27,6 +25,6 @@ Fundraising link in the first comment.
 
 ## Posting Notes
 - Timing: Thursday 18 June, 12:30
-- UPDATE the £800 figure to reflect actual current total before posting
-- This is the post to push hard — consider a small personal message to key contacts
+- UPDATE [X] to reflect actual current total before posting
+- Push hard on this one — consider a personal message to key contacts
 - Remember: fundraising link goes as first comment, not in the post body

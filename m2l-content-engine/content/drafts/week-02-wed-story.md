@@ -11,15 +11,13 @@ title: "You don't need a personal story"
 
 There's a version of charity fundraising that goes: "This cause is close to my heart because..."
 
-I can't say that about autism. No one in my family is autistic. I didn't grow up around it.
+I can't say that about autism. Nobody in my family is autistic. I didn't grow up around it.
 
-So I asked myself: is that a reason not to do this?
+So I spent some time looking at what Ambitious about Autism actually does. They support young autistic people through education and into employment — not awareness campaigns, actual practical programmes. They train the professionals working with autistic people so those professionals understand what they're dealing with.
 
-I don't think so. Ambitious about Autism does concrete, measurable work — supporting young autistic people through education and into employment. In a country where autistic adults face a 78% unemployment rate, that's not a soft charity. It's doing something hard and necessary.
+The number that stayed with me: 78% of autistic adults in the UK are unemployed or underemployed. Not because of ability. Because of how systems are designed — and who's running them.
 
-You don't have to have a personal story to think that's worth backing.
-
-I'm cycling 200 miles in June because Simon Mottram — Rapha's founder — has been backing this ride for years. If someone of his credibility keeps showing up for it, quietly, consistently, that tells you something.
+You don't need a personal story to think that's worth fixing. I don't have one. I'm doing this anyway.
 
 That's my why. Not dramatic. But it's honest.
 
@@ -29,4 +27,5 @@ Fundraising link in the first comment.
 
 ## Posting Notes
 - Timing: Wednesday 8 April, 08:30
+- The 78% stat is the anchor — let it land, don't bury it
 - Remember: fundraising link goes as first comment, not in the post body
