@@ -1,0 +1,45 @@
+{
+  "ride": {
+    "name": "Manchester to London",
+    "date": "2026-06-28",
+    "distance_miles": 200,
+    "charity": "Ambitious about Autism",
+    "fundraising_target": 1000,
+    "fundraising_url": "https://www.justgiving.com/page/guilherme-carvalho-manchester-to-london",
+    "organiser": "Rapha"
+  },
+  "campaign_start": "2026-03-30",
+  "current_raised": 0,
+  "phases": [
+    {
+      "id": "why",
+      "label": "The Why",
+      "weeks": [1, 2, 3, 4],
+      "description": "Announce the ride, tell the story, set the target. Personal connection through admiration for Simon Mottram and Rapha's commitment, not direct personal experience with autism. Honesty about that is the angle."
+    },
+    {
+      "id": "journey",
+      "label": "The Journey",
+      "weeks": [5, 6, 7, 8, 9],
+      "description": "Training milestones, Fred Whitton as proving ground, fundraising progress. Mix vulnerability with determination."
+    },
+    {
+      "id": "push",
+      "label": "The Push",
+      "weeks": [10, 11, 12, 13],
+      "description": "Countdown, final fundraising sprint, ride day, post-ride reflection. Last 2 weeks typically drive 40-50% of donations."
+    }
+  ],
+  "key_events": [
+    { "date": "2026-05-06", "name": "Sectra UK User Meeting (Day 1)", "type": "work" },
+    { "date": "2026-05-07", "name": "Sectra UK User Meeting (Day 2)", "type": "work" },
+    { "date": "2026-05-10", "name": "Fred Whitton Challenge", "type": "ride" },
+    { "date": "2026-06-28", "name": "Manchester to London", "type": "ride" }
+  ],
+  "author": {
+    "name": "Guil",
+    "full_name": "Guilherme Carvalho",
+    "role": "Head of Sales, Sectra UK&I",
+    "background": "Portuguese, based in Leeds. Cyclist. Works in healthcare technology (medical imaging, PACS, digital pathology). Came to this cause through admiration for Simon Mottram (Rapha founder) and his personal commitment to this charity, not through personal experience with autism."
+  }
+}
