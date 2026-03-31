@@ -11,21 +11,17 @@ title: "Fred Whitton: done"
 
 Fred Whitton: done. 112 miles, ~4,000m of climbing, [X] hours.
 
-The climbing was every bit as hard as advertised. I'd done 2,100m in a day before — this was nearly double. Hardknott Pass in particular. I walked a bit of it. Not ashamed.
+[UPDATE: what actually happened — be specific and honest. What hurt. What surprised you. What Hardknott Pass was actually like. How you felt at mile 80 vs mile 112. One real moment from the day.]
 
-[UPDATE: one or two specific moments from the ride — what was harder than expected, what surprised you, how you felt at the end]
+Did it the week after two days of back-to-back customer meetings. Not ideal prep, but that's kind of the point — this isn't happening in a vacuum.
 
-But finished. And if I can do that the week after a two-day customer conference, I'll take it.
-
-7 weeks to M2L. Still going 💪
-
-Link in the comments.
+7 weeks to M2L 💪 Link in the comments.
 
 ---
 
 ## Posting Notes
 - Timing: Tuesday 12 May, 08:30
 - UPDATE [X] with actual finish time
-- UPDATE with a real moment or two from the day — what actually happened beats any draft
-- The "week after a conference" detail is good — it's the juggling angle made concrete
+- The "not ideal prep" angle reinforces the juggling story — keep it
+- What actually happened on the day will be better than anything written in advance
 - Remember: fundraising link goes as first comment, not in the post body

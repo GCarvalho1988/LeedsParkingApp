@@ -6,25 +6,23 @@ content_type: training
 status: draft
 platform: linkedin
 suggested_time: "08:30"
-title: "Fred Whitton is on Sunday"
+title: "This week in particular"
 ---
 
-This week: Sectra UK User Meeting on Wednesday and Thursday. Fred Whitton on Sunday.
+This week is a good example of what this whole campaign actually looks like.
 
-112 miles, 4,000m of climbing. Hardknott Pass — a Roman road with a 33% gradient that has absolutely no business being in a sportive.
+Sectra UK User Meeting on Wednesday and Thursday — two full days with customers and colleagues. Then Fred Whitton on Sunday. 112 miles, 4,000m of climbing, Hardknott Pass.
 
-The highest I've ever climbed in a single day is about 2,100m. Fred Whitton is nearly double that. The distance I can handle. The climbing is the unknown.
+[UPDATE: how are you actually feeling going into this? Tired from work? Underprepared? Quietly confident? Be honest.]
 
-[UPDATE: how the User Meeting went, state of legs going into Sunday]
+Suit Wednesday. Bike Sunday. That's the deal.
 
-Back Sunday evening. Probably horizontal.
-
-Link in the comments if you've been meaning to 👇
+Back Sunday evening. Probably horizontal. Link in the comments 👇
 
 ---
 
 ## Posting Notes
 - Timing: Tuesday 5 May, 08:30
-- The suit-on-Wednesday / bike-on-Sunday contrast is the real-life juggle — use it
-- UPDATE with any detail about the User Meeting week and how you're feeling going into the ride
+- "Suit Wednesday. Bike Sunday." is the line — it captures the whole angle
+- UPDATE with how you're feeling going in — stress of the week, energy levels, whatever is true
 - Remember: fundraising link goes as first comment, not in the post body

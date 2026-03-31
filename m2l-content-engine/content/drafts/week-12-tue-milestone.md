@@ -11,11 +11,11 @@ title: "Two weeks out"
 
 Two weeks.
 
-[UPDATE: honest state of play — legs, fitness, how you're feeling about the distance. Are you confident? Nervous? Both?]
+[UPDATE: honest reflection on the 12 weeks. What was harder than expected — the training itself, or fitting it around everything else? One specific thing that nearly derailed it. How you're feeling now.]
 
-13 weeks of fitting training around everything else — early mornings, weekends, [UPDATE: one specific thing that was hard to juggle — a work trip, a family commitment, a week where it nearly didn't happen]. It's done now. What's left is just the ride.
+Whatever happened over the last 12 weeks, it happened alongside a full life. That's actually the bit I'm most proud of.
 
-If you haven't donated yet — the two-week window is when most people do.
+If you haven't donated yet — two weeks out is when most people do.
 
 Link in the comments 🙏
 
@@ -23,6 +23,7 @@ Link in the comments 🙏
 
 ## Posting Notes
 - Timing: Tuesday 16 June, 08:30
-- The real feelings at this point will be better than any draft — update both placeholders honestly
+- "Alongside a full life" is the line — this is the whole campaign in one sentence
+- UPDATE the reflection with something real and specific, not generic
 - Consider tagging people who said they'd donate
 - Remember: fundraising link goes as first comment, not in the post body

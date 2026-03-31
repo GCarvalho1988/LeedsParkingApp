@@ -9,15 +9,11 @@ suggested_time: "08:30"
 title: "Four weeks out"
 ---
 
-Four weeks out. This is where it gets real.
+Four weeks out.
 
-[UPDATE: what your longest ride to date has been — if you've hit 180-200km, say so. If not, be honest about where you are.]
+[UPDATE: honest state of play — how is the training going? What's been hardest to fit in? Work, travel, family — what's been competing for the same hours? And what does the next four weeks realistically look like alongside everything else?]
 
-The distance is still the thing. M2L is 322km — nearly twice my longest ever ride. The fitness is there. The specific endurance for 12-13 hours on the bike is something you can't fully simulate. At some point you just have to do it and find out.
-
-[UPDATE: what's making the training hard or easy right now — work pressure, family, weather, whatever is actually true]
-
-Four weeks. Still going.
+200 miles on 28 June. Still happening.
 
 Link in the comments — £1,000 for Ambitious about Autism.
 
@@ -25,6 +21,6 @@ Link in the comments — £1,000 for Ambitious about Autism.
 
 ## Posting Notes
 - Timing: Wednesday 3 June, 08:30
-- Be honest about the distance gap — it's the most interesting tension in the campaign
-- UPDATE both placeholders with what's actually true
+- This is a good post to be genuinely honest about the pressure of the final stretch — work and home don't stop because there's a big ride coming
+- UPDATE with what's actually true right now
 - Remember: fundraising link goes as first comment, not in the post body
