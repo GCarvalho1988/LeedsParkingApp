@@ -3,21 +3,29 @@ week: 1
 day: Tuesday
 date: '2026-03-31T00:00:00.000Z'
 content_type: story
-status: ready
+status: posted
 platform: linkedin
 suggested_time: '08:30'
 title: Why I'm doing this
+image: images/IMG_1704.JPEG
 ---
-This is a departure from my usual posts, so bear with me.
+That bike is going from Manchester to London on 28 June.
 
-I've signed myself up for something. Manchester to London. 220 miles. 28 June. For Ambitious about Autism.
+
+
+
+220 miles. For Ambitious about Autism.
 
 I've never done anything like this before. Not the distance, and not the asking.
 
-I signed up for Fred Whitton too. 112 miles through the Lake District. Apparently my self-preservation instinct is lacking.
+Fred Whitton too — 112 miles through the Lake District — six weeks before M2L. Apparently my self-preservation instinct is lacking.
 
-Six weeks to the Fred, seven to M2L. With a full-time job, a family, and a calendar that doesn't obviously have space for the training this requires, the next 13 weeks are going to be interesting.
+Full-time job. Family. A calendar with no obvious space for this. The next 13 weeks are going to be interesting.
 
-Why this cause? Simon Mottram, Rapha's founder, organises and backs this ride every year. No fanfare. Just consistent commitment to something he believes in. That tells you something about a cause.
+Why this cause? Simon Mottram — Rapha's founder — organises and backs this ride every year. No fanfare. Just consistent commitment to something he believes in. That tells you something about a cause.
 
-Target is £1,000. I'll post updates as it unfolds. The training, the juggling act, the honest bits. Link in the first comment 🚴
+Target is £1,000. I'll post the training, the juggling act, and the honest bits as it unfolds.
+
+What's the most ambitious thing you've committed to lately?
+
+#cycling #fundraising #ambitiousaboutautism #manchestertolondon

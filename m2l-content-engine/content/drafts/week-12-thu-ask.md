@@ -9,13 +9,28 @@ suggested_time: "12:30"
 title: "Last proper ask before the ride"
 ---
 
-Last proper ask before the ride.
+I'd rather cross the start line at £1,000 than cross it hoping.
 
-I don't want to cross the start line in Manchester at [X]. I want to cross it at £1,000.
 
-That's it. If you've been meaning to donate, this is the moment. Already donated — thank you, seriously — you can still help by sharing with someone who hasn't.
 
-10 days to go. Link in the comments 👇
+
+Ten days to Manchester.
+
+I'm currently at [X].
+
+If you've been meaning to donate — this is the moment, and I mean that literally.
+
+Already donated — thank you, seriously.
+
+You can still help by sending this to one person who hasn't.
+
+That's all I've got.
+
+Have you ever done something for a cause and felt awkward asking people to back it?
+
+Link in the first comment.
+
+#fundraising #cycling #ambitiousaboutautism #manchestertolondon #charity
 
 ---
 

@@ -9,13 +9,25 @@ suggested_time: "08:30"
 title: "Week 3"
 ---
 
-Week 3. Here's what fitting 220-mile training around a normal life actually looks like.
+Nobody warned me about the admin.
+
+
 
 [UPDATE: be specific — what did you actually do this week? Early morning ride before work? Missed a session because of something at home? A weekend ride that ate into family time? The specific, honest detail is the whole post.]
 
-Nobody tells you the admin of doing something like this. The alarm at 5:30. The kit laid out the night before. The weekend hours that come from somewhere.
+The alarm at 5:30.
 
-Still going. Link in the comments — £1,000 for Ambitious about Autism.
+Kit laid out the night before so there's no excuse.
+
+The weekend hours that have to come from somewhere.
+
+220 miles to London doesn't care what else is on your plate.
+
+Still going.
+
+Link in the first comment — £1,000 for Ambitious about Autism.
+
+#cycling #training #fundraising #ambitiousaboutautism #leadership
 
 ---
 

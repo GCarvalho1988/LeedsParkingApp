@@ -11,15 +11,24 @@ title: "Manchester to London. Done."
 
 Manchester to London. Done.
 
+
+
+
 [UPDATE: actual distance, start time, finish time. What happened. Be specific — one moment from the day that was harder than expected, one that surprised you. How the legs felt at mile 160. What got you to the finish.]
 
-322km. 13 weeks of training around work, travel, early mornings, and whatever life threw in. Worth every bit of it.
+13 weeks of training around work, travel, early mornings, and whatever life threw in.
 
-The link is still open if you want to donate. Every contribution after the fact counts just as much.
+Worth every bit of it.
 
-Thank you for following this 🙏
+Tomorrow I'm at RCR AI — presenting at a radiology AI conference the morning after riding 220 miles.
+
+The fundraising link is still open if you want to donate — every contribution after the fact counts just as much.
+
+Thank you for following this journey.
 
 Fundraising link in the first comment.
+
+#cycling #manchestertolondon #ambitiousaboutautism #fundraising #autism
 
 ---
 

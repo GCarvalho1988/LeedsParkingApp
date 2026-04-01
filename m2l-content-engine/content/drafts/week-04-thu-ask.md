@@ -9,13 +9,27 @@ suggested_time: "08:30"
 title: "Here's what I'm asking"
 ---
 
-Four weeks in. Time to actually ask.
+I've been building up to asking. Here it is.
 
-Manchester to London, 220 miles, 28 June, for Ambitious about Autism. I'm at [X] raised. Which is fine. Perfectly fine.
 
-If you can spare a tenner — or even just share this — it genuinely moves the needle.
 
-Link in the comments 👇
+220 miles, Manchester to London, 28 June.
+
+For Ambitious about Autism.
+
+I'm at [X] towards a £1,000 target.
+
+Which is fine. Perfectly fine.
+
+But a tenner from you moves it forward.
+
+So does a share — costs nothing, reaches people I don't know.
+
+Link in the first comment.
+
+What's the best charity ask you've ever seen on LinkedIn — and what made it work?
+
+#fundraising #cycling #ambitiousaboutautism #manchestertolondon #autism
 
 ---
 

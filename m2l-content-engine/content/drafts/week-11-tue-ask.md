@@ -9,13 +9,29 @@ suggested_time: "08:30"
 title: "Three weeks left"
 ---
 
-Three weeks out.
+I'm asking for donations from a radiology conference floor today.
 
-The cycling is sorted — or as sorted as it's going to be. The fundraising is the part that still needs a push.
 
-If you've been meaning to donate, now's the time. I'd love to hit £1,000 before the start line rather than after.
 
-Link in the comments. And if donating isn't for you, sharing takes 10 seconds 🙏
+UKIO 2026, Day 2 — Sectra's stand, badge on, exhibiting to the NHS.
+
+Three weeks from now I'll be on a bike in Manchester starting 220 miles to London.
+
+The cycling is sorted, more or less.
+
+The fundraising still needs a push.
+
+I'm raising £1,000 for Ambitious about Autism and I'd love to hit that before the start line.
+
+If you've been meaning to donate — this is the nudge.
+
+If donating isn't for you, sharing takes ten seconds and genuinely helps.
+
+Could you share this with one person today?
+
+Link in the first comment.
+
+#cycling #fundraising #ambitiousaboutautism #manchestertolondon #charity
 
 ---
 

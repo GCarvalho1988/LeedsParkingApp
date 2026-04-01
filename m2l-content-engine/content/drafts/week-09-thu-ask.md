@@ -9,13 +9,23 @@ suggested_time: "12:30"
 title: "Numbers check"
 ---
 
-Nine weeks in. Numbers check.
+I'm at [X] of £1,000. Five weeks to go. I'd rather not rely on a last-minute sprint.
 
-Target is £1,000. At [X] right now. The last couple of weeks before the ride tend to drive most donations — I'd rather not rely on that sprint.
 
-If you've been meaning to donate — now's the moment. If not, sharing takes 10 seconds.
 
-Link in the comments 👇
+Nine weeks of training.
+
+220 miles on 28 June.
+
+If you've been meaning to donate, now is the moment.
+
+If not, a share takes ten seconds and costs nothing.
+
+Which would you do — donate now or share and hope someone else does?
+
+Link in the first comment.
+
+#fundraising #charity #ambitiousaboutautism #manchestertolondon
 
 ---
 

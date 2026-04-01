@@ -9,15 +9,26 @@ suggested_time: "08:30"
 title: "Two weeks out"
 ---
 
-Two weeks.
+Twelve weeks of training didn't nearly break me. Fitting it around everything else nearly did.
+
+
+
 
 [UPDATE: honest reflection on the 12 weeks. What was harder than expected — the training itself, or fitting it around everything else? One specific thing that nearly derailed it. How you're feeling now.]
 
-Whatever happened over the last 12 weeks, it happened alongside a full life. That's actually the bit I'm most proud of.
+Whatever happened over the last 12 weeks, it happened alongside a full life.
 
-If you haven't donated yet — two weeks out is when most people do.
+That's the bit I'm most proud of.
 
-Link in the comments 🙏
+Two weeks to the start line in Manchester.
+
+Still short of £1,000 for Ambitious about Autism — if you've been meaning to donate, now's a good moment.
+
+What's the one thing that's surprised you most about a challenge you've taken on?
+
+Link in the first comment.
+
+#cycling #manchestertolondon #ambitiousaboutautism #fundraising #leadership
 
 ---
 

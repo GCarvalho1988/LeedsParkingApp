@@ -9,11 +9,25 @@ suggested_time: "12:30"
 title: "Fred Whitton done. Now the real ask."
 ---
 
-Right, Fred Whitton done. Now the actual point of all this.
+I've just ridden 112 miles over Hardknott Pass. Now I'm asking for £5.
 
-£1,000 for Ambitious about Autism. I've just proved I can handle a hard day on the bike. Feels like a reasonable moment to ask you to back it.
 
-Even £5 helps. Link in the comments 👇
+
+Fred Whitton is done.
+
+The hard day on the bike happened.
+
+Now the actual point of all this: £1,000 for Ambitious about Autism.
+
+I've proved I'll do the miles.
+
+If that's worth anything to you, link is in the first comment.
+
+Even a fiver counts.
+
+What's the cause you'd ride 220 miles for?
+
+#fundraising #ambitiousaboutautism #cycling #charity
 
 ---
 

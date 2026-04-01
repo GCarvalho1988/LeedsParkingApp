@@ -9,13 +9,28 @@ suggested_time: "08:30"
 title: "Five days"
 ---
 
-Five days.
+Five days from now I'll know if I actually had what it takes.
 
-Sunday morning I'm on a start line in Manchester. Sunday evening I'll be somewhere outside London, either done or very close to it.
 
-If you haven't donated and you were going to — please do it today. I'd rather hit £1,000 before the ride than after.
 
-Link in the comments. I'll post on the day when I can 🚴
+
+Sunday morning: start line, Manchester.
+
+Sunday evening: somewhere south of that, either done or very close.
+
+220 miles.
+
+If you haven't donated and you were going to — please do it today.
+
+I'd rather hit £1,000 before the ride than spend the whole 220 miles doing the maths.
+
+I'll post on the day when I can.
+
+What would make you back down from a goal this close to the finish?
+
+Link in the first comment.
+
+#cycling #manchestertolondon #ambitiousaboutautism #fundraising #charity
 
 ---
 

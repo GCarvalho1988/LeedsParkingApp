@@ -9,13 +9,23 @@ suggested_time: "08:30"
 title: "Four weeks out"
 ---
 
-Four weeks out.
+Four weeks to ride 220 miles. Work hasn't slowed down. Neither has everything else.
+
+
 
 [UPDATE: honest state of play — how is the training going? What's been hardest to fit in? Work, travel, family — what's been competing for the same hours? And what does the next four weeks realistically look like alongside everything else?]
 
-220 miles on 28 June. Still happening.
+28 June.
 
-Link in the comments — £1,000 for Ambitious about Autism.
+Manchester to London.
+
+£1,000 for Ambitious about Autism — still going.
+
+What's the one thing you'd have to give up to make space for something this size?
+
+Link in the first comment.
+
+#cycling #training #manchestertolondon #charity #leadership
 
 ---
 
