@@ -2,9 +2,6 @@
 
 export const INCOME_CATEGORIES = new Set(['Income', 'Interest earnings', 'Salary'])
 
-// Categories shown as pending in the Review page (excludes pre-tagged Dulce Personal/Work)
-export const REVIEW_PENDING_CATEGORIES = ['Clothing & shoes', 'General merchandise']
-
 export const BILLS_CATEGORIES = new Set([
   'Car Repayments',
   'Child & dependent expenses',
@@ -31,7 +28,7 @@ export const TRANSIENT_CATEGORIES = new Set([
 
 /**
  * @param {string} category
- * @returns {'bills' | 'discretionary' | 'transient'}
+ * @returns {'income' | 'bills' | 'discretionary' | 'transient'}
  */
 export function bucketCategory(category) {
   if (INCOME_CATEGORIES.has(category)) return 'income'
