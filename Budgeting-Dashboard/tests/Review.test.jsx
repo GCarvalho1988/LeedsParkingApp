@@ -154,4 +154,47 @@ describe('Review', () => {
     await userEvent.click(screen.getByText('Personal'))
     await waitFor(() => expect(screen.getByText(/tagged this period/i)).toBeInTheDocument())
   })
+
+  it('clicking Work tags the transaction and moves it to tagged section', async () => {
+    mockFrom.mockImplementation(table => {
+      if (table === 'uploads')        return makeChain({ then: vi.fn(cb => Promise.resolve(cb({ data: [{ period: '2025-03' }], error: null }))) })
+      if (table === 'expense_claims') return makeChain({ then: vi.fn(cb => Promise.resolve(cb({ data: [], error: null }))) })
+      if (table === 'flags')          return makeChain({ then: vi.fn(cb => Promise.resolve(cb({ data: [], error: null }))) })
+      if (table === 'transactions')   return makeChain({
+        then: vi.fn(cb => Promise.resolve(cb({ data: [{ id: '1', date: '2025-03-05', description: 'OFFICEWORKS', amount: 22, category: 'General merchandise' }], error: null }))),
+        update: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockResolvedValue({ error: null }),
+      })
+      return makeChain()
+    })
+    render(<Review />)
+    await waitFor(() => expect(screen.getByText('OFFICEWORKS')).toBeInTheDocument())
+    await userEvent.click(screen.getByText('Work'))
+    await waitFor(() => expect(screen.getByText(/tagged this period/i)).toBeInTheDocument())
+  })
+
+  it('clicking category chip on pending row opens the category select', async () => {
+    setupPeriodMocks({
+      pendingTx: { id: '1', date: '2025-03-05', description: 'ASOS ORDER', amount: 55, category: 'Clothing & shoes' },
+    })
+    render(<Review />)
+    await waitFor(() => expect(screen.getByText('ASOS ORDER')).toBeInTheDocument())
+    // Category chip is a button containing the category text
+    const chip = screen.getByRole('button', { name: /clothing/i })
+    await userEvent.click(chip)
+    // CategorySelect renders a <select> element
+    expect(screen.getByRole('combobox')).toBeInTheDocument()
+  })
+
+  it('clicking the tag button on a tagged row opens the retag dropdown', async () => {
+    setupPeriodMocks({
+      taggedTx: { id: '2', date: '2025-03-10', description: 'STAPLES', amount: 18, category: 'Dulce Work Expenses' },
+    })
+    render(<Review />)
+    await waitFor(() => expect(screen.getByText('STAPLES')).toBeInTheDocument())
+    // The tagged row tag button shows 'Work ▾'
+    await userEvent.click(screen.getByText(/work ▾/i))
+    // Dropdown should show 'Personal' option (can switch from Work to Personal)
+    expect(screen.getByRole('button', { name: /^personal$/i })).toBeInTheDocument()
+  })
 })
