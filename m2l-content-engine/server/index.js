@@ -4,6 +4,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import matter from 'gray-matter';
+import multer from 'multer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,6 +13,13 @@ const ROOT = path.join(__dirname, '..');
 const CAMPAIGN_PATH = path.join(ROOT, 'config', 'campaign.json');
 const POSTING_RULES_PATH = path.join(ROOT, 'config', 'posting-rules.json');
 const DRAFTS_PATH = path.join(ROOT, 'content', 'drafts');
+const IMAGES_PATH = path.join(ROOT, 'content', 'images');
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, IMAGES_PATH),
+  filename:    (req, file, cb) => cb(null, file.originalname),
+});
+const upload = multer({ storage });
 
 const app = express();
 app.use(cors());
@@ -43,6 +51,23 @@ app.get('/api/posting-rules', async (req, res) => {
     res.json(JSON.parse(data));
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// --- Images ---
+
+app.post('/api/images', upload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  res.json({ path: `images/${req.file.filename}` });
+});
+
+app.get('/api/images/:filename', async (req, res) => {
+  const filepath = path.join(IMAGES_PATH, req.params.filename);
+  try {
+    await fs.access(filepath);
+    res.sendFile(filepath);
+  } catch {
+    res.status(404).json({ error: 'Image not found' });
   }
 });
 
