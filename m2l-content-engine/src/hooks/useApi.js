@@ -21,3 +21,10 @@ export const deleteDraft     = (filename)       => del(`${BASE}/drafts/${filenam
 
 export const addEvent        = (event)          => post(`${BASE}/events`, event);
 export const deleteEvent     = (date)           => del(`${BASE}/events/${encodeURIComponent(date)}`);
+
+export const uploadImage = (file) => {
+  const form = new FormData();
+  form.append('file', file);
+  return fetch(`${BASE}/images`, { method: 'POST', body: form })
+    .then(json);
+};
