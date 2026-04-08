@@ -1,12 +1,8 @@
 import { jest } from '@jest/globals';
 
-const mockReadBlobWithEtag = jest.fn();
-const mockWriteBlobConditional = jest.fn();
-jest.unstable_mockModule('../netlify/functions/_blob-helpers.js', () => ({
-  readBlobWithEtag: mockReadBlobWithEtag,
-  writeBlobConditional: mockWriteBlobConditional,
-  readBlob: jest.fn(),
-  writeBlob: jest.fn(),
+const mockSet = jest.fn();
+jest.unstable_mockModule('@netlify/blobs', () => ({
+  getStore: () => ({ set: mockSet, get: jest.fn(), list: jest.fn() }),
 }));
 
 const { appendAuditLog } = await import('../netlify/functions/_audit-helpers.js');
@@ -18,84 +14,38 @@ function req(ip = '1.2.3.4') {
 beforeEach(() => jest.clearAllMocks());
 
 describe('appendAuditLog: success', () => {
-  test('appends entry with correct fields including IP and timestamp', async () => {
-    mockReadBlobWithEtag.mockResolvedValue({ data: [], etag: 'e1' });
-    mockWriteBlobConditional.mockResolvedValue();
-
+  test('stores entry with correct fields under audit-log/ prefix', async () => {
+    mockSet.mockResolvedValue();
     await appendAuditLog(req('9.8.7.6'), { action: 'book', space: 'A', date: '2026-04-09', bookedBy: 'Alice' });
 
-    expect(mockWriteBlobConditional).toHaveBeenCalledWith(
-      'audit-log',
-      expect.arrayContaining([
-        expect.objectContaining({
-          action: 'book', space: 'A', date: '2026-04-09', bookedBy: 'Alice', ip: '9.8.7.6',
-        }),
-      ]),
-      'e1'
-    );
-    const written = mockWriteBlobConditional.mock.calls[0][1];
-    expect(written[0].ts).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(mockSet).toHaveBeenCalledTimes(1);
+    const [key, value] = mockSet.mock.calls[0];
+    expect(key).toMatch(/^audit-log\//);
+    const entry = JSON.parse(value);
+    expect(entry).toMatchObject({ action: 'book', space: 'A', date: '2026-04-09', bookedBy: 'Alice', ip: '9.8.7.6' });
+    expect(entry.ts).toMatch(/^\d{4}-\d{2}-\d{2}T/);
   });
 
-  test('trims to 500 entries when log is at capacity', async () => {
-    const existing = Array.from({ length: 500 }, (_, i) => ({
-      ts: `t${i}`, action: 'book', space: 'A', date: '2026-01-01', bookedBy: 'X', ip: '1.1.1.1',
-    }));
-    mockReadBlobWithEtag.mockResolvedValue({ data: existing, etag: 'e1' });
-    mockWriteBlobConditional.mockResolvedValue();
+  test('each concurrent call generates a unique key', async () => {
+    mockSet.mockResolvedValue();
+    await Promise.all([
+      appendAuditLog(req(), { action: 'book', space: 'A', date: '2026-04-09', bookedBy: 'Alice' }),
+      appendAuditLog(req(), { action: 'book', space: 'B', date: '2026-04-09', bookedBy: 'Bob' }),
+      appendAuditLog(req(), { action: 'book', space: 'A', date: '2026-04-10', bookedBy: 'Carol' }),
+    ]);
 
-    await appendAuditLog(req(), { action: 'cancel', space: 'B', date: '2026-04-09', bookedBy: 'Bob' });
-
-    const written = mockWriteBlobConditional.mock.calls[0][1];
-    expect(written).toHaveLength(500);
-    expect(written[499]).toMatchObject({ action: 'cancel', bookedBy: 'Bob' });
+    expect(mockSet).toHaveBeenCalledTimes(3);
+    const keys = mockSet.mock.calls.map(([k]) => k);
+    const uniqueKeys = new Set(keys);
+    expect(uniqueKeys.size).toBe(3);
+    keys.forEach((k) => expect(k).toMatch(/^audit-log\//));
   });
 
   test('uses "unknown" as IP when header is absent', async () => {
-    mockReadBlobWithEtag.mockResolvedValue({ data: [], etag: 'e1' });
-    mockWriteBlobConditional.mockResolvedValue();
+    mockSet.mockResolvedValue();
+    await appendAuditLog({ headers: { get: () => null } }, { action: 'cancel', space: 'B', date: '2026-04-09', bookedBy: 'Bob' });
 
-    const noIpReq = { headers: { get: () => null } };
-    await appendAuditLog(noIpReq, { action: 'book', space: 'A', date: '2026-04-09', bookedBy: 'Alice' });
-
-    const written = mockWriteBlobConditional.mock.calls[0][1];
-    expect(written[0].ip).toBe('unknown');
-  });
-});
-
-describe('appendAuditLog: ETag retry', () => {
-  test('retries on mismatch and succeeds on second attempt', async () => {
-    mockReadBlobWithEtag
-      .mockResolvedValueOnce({ data: [], etag: 'e1' })
-      .mockResolvedValueOnce({ data: [], etag: 'e2' });
-    mockWriteBlobConditional
-      .mockRejectedValueOnce(new Error('412'))
-      .mockResolvedValueOnce();
-
-    await expect(
-      appendAuditLog(req(), { action: 'book', space: 'A', date: '2026-04-09', bookedBy: 'Alice' })
-    ).resolves.toBeUndefined();
-    expect(mockReadBlobWithEtag).toHaveBeenCalledTimes(2);
-  });
-
-  test('throws after exhausting all 5 retries', async () => {
-    mockReadBlobWithEtag.mockResolvedValue({ data: [], etag: 'e1' });
-    mockWriteBlobConditional.mockRejectedValue(new Error('412'));
-
-    await expect(
-      appendAuditLog(req(), { action: 'book', space: 'A', date: '2026-04-09', bookedBy: 'Alice' })
-    ).rejects.toThrow('conflict');
-    expect(mockReadBlobWithEtag).toHaveBeenCalledTimes(5);
-  });
-});
-
-describe('appendAuditLog: storage error', () => {
-  test('throws storageError after all retries return corrupt data', async () => {
-    mockReadBlobWithEtag.mockResolvedValue({ data: null, etag: null });
-
-    await expect(
-      appendAuditLog(req(), { action: 'book', space: 'A', date: '2026-04-09', bookedBy: 'Alice' })
-    ).rejects.toThrow('storageError');
-    expect(mockReadBlobWithEtag).toHaveBeenCalledTimes(5);
+    const entry = JSON.parse(mockSet.mock.calls[0][1]);
+    expect(entry.ip).toBe('unknown');
   });
 });
