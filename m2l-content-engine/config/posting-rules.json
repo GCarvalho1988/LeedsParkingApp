@@ -1,0 +1,31 @@
+{
+  "platform": "linkedin",
+  "timing": {
+    "best_days": ["Tuesday", "Wednesday", "Thursday"],
+    "best_times": ["08:00-10:00", "12:00-13:00"],
+    "avoid": ["Friday afternoon", "weekends"]
+  },
+  "formatting": {
+    "max_length_chars": 1300,
+    "use_line_breaks": true,
+    "short_paragraphs": true,
+    "link_placement": "Post fundraising link as FIRST COMMENT, not in post body. LinkedIn algorithm suppresses posts with external links.",
+    "cta_frequency": "Every post should have a soft or hard call to action — donate, share, or comment."
+  },
+  "frequency": {
+    "min_per_week": 1,
+    "max_per_week": 2,
+    "never_post_consecutive_days": true
+  },
+  "tone": {
+    "voice": "Direct, honest, no corporate waffle. British English. Self-deprecating humour welcome. Never guilt-trip. Never fake emotion. Authenticity over polish.",
+    "avoid": ["corporate jargon", "excessive emojis", "guilt-tripping", "fake enthusiasm", "humble bragging"]
+  },
+  "content_types": {
+    "story": "Personal narrative, the 'why', learning about the cause",
+    "milestone": "Training achievements, Fred Whitton, ride day",
+    "ask": "Direct fundraising requests — honest, not apologetic",
+    "thank": "Gratitude posts — specific, not generic",
+    "training": "Behind-the-scenes training updates with honest reflections"
+  }
+}
