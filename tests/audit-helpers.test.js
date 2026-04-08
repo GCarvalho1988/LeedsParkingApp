@@ -50,6 +50,17 @@ describe('appendAuditLog: success', () => {
     expect(written).toHaveLength(500);
     expect(written[499]).toMatchObject({ action: 'cancel', bookedBy: 'Bob' });
   });
+
+  test('uses "unknown" as IP when header is absent', async () => {
+    mockReadBlobWithEtag.mockResolvedValue({ data: [], etag: 'e1' });
+    mockWriteBlobConditional.mockResolvedValue();
+
+    const noIpReq = { headers: { get: () => null } };
+    await appendAuditLog(noIpReq, { action: 'book', space: 'A', date: '2026-04-09', bookedBy: 'Alice' });
+
+    const written = mockWriteBlobConditional.mock.calls[0][1];
+    expect(written[0].ip).toBe('unknown');
+  });
 });
 
 describe('appendAuditLog: ETag retry', () => {
@@ -79,11 +90,12 @@ describe('appendAuditLog: ETag retry', () => {
 });
 
 describe('appendAuditLog: storage error', () => {
-  test('throws when blob is corrupt', async () => {
+  test('throws storageError after all retries return corrupt data', async () => {
     mockReadBlobWithEtag.mockResolvedValue({ data: null, etag: null });
 
     await expect(
       appendAuditLog(req(), { action: 'book', space: 'A', date: '2026-04-09', bookedBy: 'Alice' })
     ).rejects.toThrow('storageError');
+    expect(mockReadBlobWithEtag).toHaveBeenCalledTimes(5);
   });
 });
