@@ -3,6 +3,7 @@ import { getBankHolidays } from './bank-holidays.js';
 import {
   getBookingsForWeek, bookSpace, cancelBooking, getEmployees,
   adminVerifyPassword, adminAddEmployee, adminRemoveEmployee, adminBookSpace, adminCancelBooking,
+  adminGetAuditLog,
 } from './api.js';
 import { getName, setName, clearName } from './identity.js';
 import { addPendingBooking, addCancelledId, mergeWithSession } from './session-cache.js';
@@ -598,8 +599,12 @@ function _showAdminPanel() {
   const tabBookings = document.createElement('button');
   tabBookings.className = 'admin-tab-btn';
   tabBookings.textContent = 'Bookings';
+  const tabAudit = document.createElement('button');
+  tabAudit.className = 'admin-tab-btn';
+  tabAudit.textContent = 'Audit Log';
   tabBar.appendChild(tabEmployees);
   tabBar.appendChild(tabBookings);
+  tabBar.appendChild(tabAudit);
   panel.appendChild(tabBar);
 
   // Content area
@@ -610,12 +615,15 @@ function _showAdminPanel() {
   function showTab(name) {
     tabEmployees.classList.toggle('active', name === 'employees');
     tabBookings.classList.toggle('active', name === 'bookings');
+    tabAudit.classList.toggle('active', name === 'audit');
     if (name === 'employees') _renderEmployeesTab(content);
-    else _renderBookingsTab(content);
+    else if (name === 'bookings') _renderBookingsTab(content);
+    else _renderAuditLogTab(content);
   }
 
   tabEmployees.addEventListener('click', () => showTab('employees'));
   tabBookings.addEventListener('click', () => showTab('bookings'));
+  tabAudit.addEventListener('click', () => showTab('audit'));
 
   app.appendChild(panel);
   showTab('employees');
@@ -833,6 +841,174 @@ async function _renderBookingsTab(container) {
   gridEl.id = 'admin-week-grid';
   container.appendChild(gridEl);
   _renderAdminGrid(gridEl, days, bookings, container);
+}
+
+// ─── Admin: audit log tab ──────────────────────────────────────────────────
+
+function _fmtTs(ts) {
+  const d = new Date(ts);
+  return (
+    d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) +
+    ', ' +
+    d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+  );
+}
+
+function _fmtDate(dateStr) {
+  const [y, m, day] = dateStr.split('-');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${day} ${months[+m - 1]} ${y}`;
+}
+
+async function _renderAuditLogTab(container) {
+  container.innerHTML = '<p style="font-size:0.85rem;color:var(--muted);padding:0.5rem 0;">Loading…</p>';
+
+  let entries;
+  try {
+    entries = await adminGetAuditLog(_adminPassword);
+  } catch {
+    container.innerHTML = '<p style="font-size:0.85rem;color:#dc2626;">Could not load audit log.</p>';
+    return;
+  }
+
+  if (entries.error === 'unauthorized') {
+    _adminPassword = null;
+    container.innerHTML = '<p style="color:#dc2626;font-size:0.85rem;">Session expired. Please reload.</p>';
+    return;
+  }
+
+  container.innerHTML = '';
+
+  const allEntries = [...entries].reverse(); // newest first
+
+  const countEl = document.createElement('p');
+  countEl.className = 'admin-audit-count';
+  container.appendChild(countEl);
+
+  const tableWrap = document.createElement('div');
+  tableWrap.style.overflowX = 'auto';
+
+  const table = document.createElement('table');
+  table.className = 'admin-audit-table';
+
+  // ── thead ──
+  const thead = document.createElement('thead');
+
+  const labelRow = document.createElement('tr');
+  ['Timestamp', 'Action', 'Name', 'Space', 'Booking Date', 'IP Address'].forEach((h) => {
+    const th = document.createElement('th');
+    th.textContent = h;
+    labelRow.appendChild(th);
+  });
+  thead.appendChild(labelRow);
+
+  const filterRow = document.createElement('tr');
+  filterRow.className = 'admin-audit-filter-row';
+
+  const filters = { ts: '', action: '', bookedBy: '', space: '', date: '', ip: '' };
+
+  function _textFilter(key) {
+    const td = document.createElement('td');
+    const inp = document.createElement('input');
+    inp.placeholder = 'Filter…';
+    inp.className = 'admin-audit-filter-input';
+    inp.addEventListener('input', () => { filters[key] = inp.value; rebuildBody(); });
+    td.appendChild(inp);
+    return td;
+  }
+
+  function _selectFilter(key, opts) {
+    const td = document.createElement('td');
+    const sel = document.createElement('select');
+    sel.className = 'admin-audit-filter-input';
+    [['', 'All'], ...opts].forEach(([val, label]) => {
+      const opt = document.createElement('option');
+      opt.value = val;
+      opt.textContent = label;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change', () => { filters[key] = sel.value; rebuildBody(); });
+    td.appendChild(sel);
+    return td;
+  }
+
+  function _dateFilter(key) {
+    const td = document.createElement('td');
+    const inp = document.createElement('input');
+    inp.type = 'date';
+    inp.className = 'admin-audit-filter-input';
+    inp.addEventListener('change', () => { filters[key] = inp.value; rebuildBody(); });
+    td.appendChild(inp);
+    return td;
+  }
+
+  filterRow.appendChild(_textFilter('ts'));
+  filterRow.appendChild(_selectFilter('action', [['book', 'Book'], ['cancel', 'Cancel']]));
+  filterRow.appendChild(_textFilter('bookedBy'));
+  filterRow.appendChild(_selectFilter('space', [['A', 'A'], ['B', 'B']]));
+  filterRow.appendChild(_dateFilter('date'));
+  filterRow.appendChild(_textFilter('ip'));
+  thead.appendChild(filterRow);
+  table.appendChild(thead);
+
+  // ── tbody ──
+  const tbody = document.createElement('tbody');
+  table.appendChild(tbody);
+  tableWrap.appendChild(table);
+  container.appendChild(tableWrap);
+
+  function rebuildBody() {
+    const visible = allEntries.filter((e) => {
+      if (filters.ts && !_fmtTs(e.ts).toLowerCase().includes(filters.ts.toLowerCase())) return false;
+      if (filters.action && e.action !== filters.action) return false;
+      if (filters.bookedBy && !e.bookedBy.toLowerCase().includes(filters.bookedBy.toLowerCase())) return false;
+      if (filters.space && e.space !== filters.space) return false;
+      if (filters.date && e.date !== filters.date) return false;
+      if (filters.ip && !e.ip.includes(filters.ip)) return false;
+      return true;
+    });
+
+    countEl.textContent = `Showing ${visible.length} of ${allEntries.length} entries`;
+    tbody.innerHTML = '';
+
+    visible.forEach((e) => {
+      const tr = document.createElement('tr');
+
+      const tsTd = document.createElement('td');
+      tsTd.textContent = _fmtTs(e.ts);
+      tr.appendChild(tsTd);
+
+      const actionTd = document.createElement('td');
+      const badge = document.createElement('span');
+      badge.className = `admin-audit-badge admin-audit-badge--${e.action}`;
+      badge.textContent = e.action.toUpperCase();
+      actionTd.appendChild(badge);
+      tr.appendChild(actionTd);
+
+      const nameTd = document.createElement('td');
+      nameTd.textContent = e.bookedBy;
+      tr.appendChild(nameTd);
+
+      const spaceTd = document.createElement('td');
+      spaceTd.textContent = e.space;
+      tr.appendChild(spaceTd);
+
+      const dateTd = document.createElement('td');
+      dateTd.textContent = _fmtDate(e.date);
+      tr.appendChild(dateTd);
+
+      const ipTd = document.createElement('td');
+      const ipSpan = document.createElement('span');
+      ipSpan.className = 'admin-audit-ip';
+      ipSpan.textContent = e.ip;
+      ipTd.appendChild(ipSpan);
+      tr.appendChild(ipTd);
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  rebuildBody();
 }
 
 function _renderAdminGrid(gridEl, days, bookings, container) {
