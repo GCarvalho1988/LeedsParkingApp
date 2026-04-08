@@ -64,3 +64,7 @@ export async function adminBookSpace(password, booking) {
 export async function adminCancelBooking(password, id) {
   return flowFetch('/api/admin-bookings', { password, action: 'cancel', booking: { id } });
 }
+
+export async function adminGetAuditLog(password) {
+  return flowFetch('/api/get-audit-log', { password });
+}
