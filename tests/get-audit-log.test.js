@@ -45,3 +45,12 @@ describe('get-audit-log: success', () => {
     expect(await res.json()).toEqual([]);
   });
 });
+
+describe('get-audit-log: storage error', () => {
+  test('returns storageError with status 500 when blob is corrupt', async () => {
+    mockReadBlob.mockResolvedValue(null);
+    const res = await handler(req({ password: 'secret' }));
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: 'storageError' });
+  });
+});
