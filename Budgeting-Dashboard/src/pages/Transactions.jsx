@@ -20,7 +20,7 @@ export default function Transactions() {
   const [transactions, setTransactions] = useState([])
   const [flags, setFlags] = useState({})
   const [loading, setLoading] = useState(true)
-  const [filters, setFilters] = useState({ month: '', category: '', minAmount: '', maxAmount: '' })
+  const [filters, setFilters] = useState({ month: '', category: '', minAmount: '', maxAmount: '', hasComments: false })
   const [allCategories, setAllCategories] = useState([])
   const [months, setMonths] = useState([])
   const [editingCategory, setEditingCategory] = useState(null) // txId being edited
@@ -45,7 +45,7 @@ export default function Transactions() {
 
       const { data: flagData } = await supabase
         .from('flags')
-        .select('id, transaction_id, comment, created_at')
+        .select('id, transaction_id, comment, created_at, user_id, profiles(display_name)')
 
       const flagMap = {}
       flagData?.forEach(f => {
@@ -75,6 +75,7 @@ export default function Transactions() {
     if (filters.category && tx.category !== filters.category) return false
     if (filters.minAmount !== '' && Math.abs(Number(tx.amount)) < filters.minAmount) return false
     if (filters.maxAmount !== '' && Math.abs(Number(tx.amount)) > filters.maxAmount) return false
+    if (filters.hasComments && !flags[tx.id]?.length) return false
     return true
   })
 
@@ -115,6 +116,16 @@ export default function Transactions() {
           onChange={e => setFilters(f => ({ ...f, maxAmount: e.target.value ? Number(e.target.value) : '' }))}
           className={inputClass}
         />
+        <button
+          onClick={() => setFilters(f => ({ ...f, hasComments: !f.hasComments }))}
+          className={`border text-xs rounded px-3 py-2 transition-colors ${
+            filters.hasComments
+              ? 'border-[#DC9F85] text-[#DC9F85]'
+              : 'border-[#66473B] text-[#B6A596] hover:border-[#DC9F85] hover:text-[#DC9F85]'
+          }`}
+        >
+          Has comments
+        </button>
         <span
           className="text-xs text-[#B6A596] uppercase tracking-widest"
           style={{ fontFamily: "'Clash Grotesk', sans-serif" }}
