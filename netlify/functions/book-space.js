@@ -1,4 +1,5 @@
 import { readBlobWithEtag, writeBlobConditional } from './_blob-helpers.js';
+import { appendAuditLog } from './_audit-helpers.js';
 
 const MAX_RETRIES = 5;
 
@@ -27,6 +28,9 @@ export default async (req) => {
     const id = crypto.randomUUID();
     try {
       await writeBlobConditional('bookings', [...bookings, { id, date, space, bookedBy: name }], etag);
+      try {
+        await appendAuditLog(req, { action: 'book', space, date, bookedBy: name });
+      } catch { /* non-fatal */ }
       return new Response(JSON.stringify({ id }), { status: 200 });
     } catch {
       // ETag mismatch — a concurrent write landed between our read and write; retry

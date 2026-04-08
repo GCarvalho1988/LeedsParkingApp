@@ -10,13 +10,21 @@ jest.unstable_mockModule('../netlify/functions/_blob-helpers.js', () => ({
   writeBlob: jest.fn(),
 }));
 
+const mockAppendAuditLog = jest.fn();
+jest.unstable_mockModule('../netlify/functions/_audit-helpers.js', () => ({
+  appendAuditLog: mockAppendAuditLog,
+}));
+
 const { default: handler } = await import('../netlify/functions/book-space.js');
 
 function req(body) {
   return { json: async () => body };
 }
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockAppendAuditLog.mockResolvedValue();
+});
 
 // ─── Happy path ─────────────────────────────────────────────────────────────
 
@@ -37,6 +45,29 @@ describe('book-space: success', () => {
       ]),
       'e1'
     );
+  });
+
+  test('calls appendAuditLog with correct fields after successful booking', async () => {
+    mockReadBlobWithEtag.mockResolvedValue({ data: [], etag: 'e1' });
+    mockWriteBlobConditional.mockResolvedValue();
+
+    await handler(req({ date: '2026-04-09', space: 'A', name: 'Alice' }));
+
+    expect(mockAppendAuditLog).toHaveBeenCalledWith(
+      expect.anything(),
+      { action: 'book', space: 'A', date: '2026-04-09', bookedBy: 'Alice' }
+    );
+  });
+
+  test('does not call appendAuditLog when booking fails (alreadyBooked)', async () => {
+    mockReadBlobWithEtag.mockResolvedValue({
+      data: [{ id: 'x', date: '2026-04-09', space: 2, bookedBy: 'Alice' }],
+      etag: 'e1',
+    });
+
+    await handler(req({ date: '2026-04-09', space: 2, name: 'Alice' }));
+
+    expect(mockAppendAuditLog).not.toHaveBeenCalled();
   });
 });
 
