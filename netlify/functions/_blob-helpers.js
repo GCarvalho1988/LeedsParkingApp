@@ -53,3 +53,5 @@ export async function writeBlobConditional(key, data, etag) {
     throw new Error('Conditional write failed: ETag mismatch or blob already exists');
   }
 }
+
+export const getAuditStore = () => _store();

@@ -1,8 +1,12 @@
 import { jest } from '@jest/globals';
 
 const mockSet = jest.fn();
-jest.unstable_mockModule('@netlify/blobs', () => ({
-  getStore: () => ({ set: mockSet, get: jest.fn(), list: jest.fn() }),
+jest.unstable_mockModule('../netlify/functions/_blob-helpers.js', () => ({
+  readBlobWithEtag: jest.fn(),
+  writeBlobConditional: jest.fn(),
+  readBlob: jest.fn(),
+  writeBlob: jest.fn(),
+  getAuditStore: () => ({ set: mockSet, get: jest.fn(), list: jest.fn() }),
 }));
 
 const { appendAuditLog } = await import('../netlify/functions/_audit-helpers.js');

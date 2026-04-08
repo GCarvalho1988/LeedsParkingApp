@@ -1,11 +1,13 @@
 import { jest } from '@jest/globals';
 
-const mockSet = jest.fn();
 const mockGet = jest.fn();
 const mockList = jest.fn();
-
-jest.unstable_mockModule('@netlify/blobs', () => ({
-  getStore: () => ({ set: mockSet, get: mockGet, list: mockList }),
+jest.unstable_mockModule('../netlify/functions/_blob-helpers.js', () => ({
+  readBlobWithEtag: jest.fn(),
+  writeBlobConditional: jest.fn(),
+  readBlob: jest.fn(),
+  writeBlob: jest.fn(),
+  getAuditStore: () => ({ set: jest.fn(), get: mockGet, list: mockList }),
 }));
 
 const { default: handler } = await import('../netlify/functions/get-audit-log.js');

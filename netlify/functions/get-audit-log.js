@@ -1,4 +1,4 @@
-import { getStore } from '@netlify/blobs';
+import { getAuditStore } from './_blob-helpers.js';
 
 export default async (req) => {
   if (!process.env.ADMIN_PASSWORD) {
@@ -9,7 +9,7 @@ export default async (req) => {
     return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 200 });
   }
   try {
-    const store = getStore('parking-app');
+    const store = getAuditStore();
     const { blobs } = await store.list({ prefix: 'audit-log/' });
     // Keys start with ISO timestamp → lexicographic sort = chronological (oldest first)
     const sorted = [...blobs].sort((a, b) => a.key.localeCompare(b.key));
