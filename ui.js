@@ -887,9 +887,18 @@ async function _renderAuditLogTab(container) {
 
   const allEntries = [...entries].reverse(); // newest first
 
+  const topBar = document.createElement('div');
+  topBar.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding-bottom:0.25rem';
   const countEl = document.createElement('p');
   countEl.className = 'admin-audit-count';
-  container.appendChild(countEl);
+  const refreshBtn = document.createElement('button');
+  refreshBtn.textContent = '↻ Refresh';
+  refreshBtn.className = 'admin-add-btn';
+  refreshBtn.style.cssText = 'font-size:0.8rem;padding:0.25rem 0.75rem';
+  refreshBtn.addEventListener('click', () => _renderAuditLogTab(container));
+  topBar.appendChild(countEl);
+  topBar.appendChild(refreshBtn);
+  container.appendChild(topBar);
 
   const tableWrap = document.createElement('div');
   tableWrap.style.overflowX = 'auto';

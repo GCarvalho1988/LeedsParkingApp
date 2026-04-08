@@ -30,7 +30,7 @@ export default async (req) => {
       await writeBlobConditional('bookings', bookings.filter((b) => b.id !== id), etag);
       try {
         await appendAuditLog(req, { action: 'cancel', space: target.space, date: target.date, bookedBy: target.bookedBy });
-      } catch { /* non-fatal */ }
+      } catch (e) { console.error('[audit] cancel-booking append failed:', e); }
       return new Response(JSON.stringify({ success: true }), { status: 200 });
     } catch {
       // ETag mismatch — concurrent write; retry
