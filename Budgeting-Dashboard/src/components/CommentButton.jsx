@@ -15,7 +15,7 @@ const CommentIcon = () => (
 )
 
 export default function CommentButton({ transactionId, existingFlags = [] }) {
-  const { user } = useAuth()
+  const { user, role } = useAuth()
   const [open, setOpen] = useState(false)
   const [comment, setComment] = useState('')
   const [flags, setFlags] = useState(existingFlags)
@@ -38,6 +38,11 @@ export default function CommentButton({ transactionId, existingFlags = [] }) {
     setOpen(false)
   }
 
+  async function deleteComment(flagId) {
+    await supabase.from('flags').delete().eq('id', flagId)
+    setFlags(f => f.filter(flag => flag.id !== flagId))
+  }
+
   return (
     <div className="relative">
       <button
@@ -58,8 +63,18 @@ export default function CommentButton({ transactionId, existingFlags = [] }) {
           {flags.length > 0 && (
             <div className="mb-3 space-y-2">
               {flags.map(f => (
-                <div key={f.id} className="text-xs border border-[#35211A] rounded p-2 text-[#B6A596]">
-                  {f.comment}
+                <div key={f.id} className="text-xs border border-[#35211A] rounded p-2 text-[#B6A596] flex items-start gap-2">
+                  <span className="font-semibold shrink-0">{f.profiles?.display_name}</span>
+                  <span className="flex-1">{f.comment}</span>
+                  {(user.id === f.user_id || role === 'admin') && (
+                    <button
+                      onClick={() => deleteComment(f.id)}
+                      aria-label="Delete comment"
+                      className="shrink-0 text-[#66473B] hover:text-[#DC9F85] transition-colors leading-none"
+                    >
+                      ×
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
