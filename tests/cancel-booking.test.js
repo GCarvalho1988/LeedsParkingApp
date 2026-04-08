@@ -9,13 +9,21 @@ jest.unstable_mockModule('../netlify/functions/_blob-helpers.js', () => ({
   writeBlob: jest.fn(),
 }));
 
+const mockAppendAuditLog = jest.fn();
+jest.unstable_mockModule('../netlify/functions/_audit-helpers.js', () => ({
+  appendAuditLog: mockAppendAuditLog,
+}));
+
 const { default: handler } = await import('../netlify/functions/cancel-booking.js');
 
 function req(body) {
   return { json: async () => body };
 }
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockAppendAuditLog.mockResolvedValue();
+});
 
 describe('cancel-booking: success', () => {
   test('removes the booking when id and name match', async () => {
@@ -41,6 +49,27 @@ describe('cancel-booking: success', () => {
     const res = await handler(req({ id: 'nonexistent', name: 'Alice' }));
     expect(await res.json()).toEqual({ success: true });
     expect(mockWriteBlobConditional).not.toHaveBeenCalled();
+  });
+
+  test('calls appendAuditLog with correct fields after successful cancellation', async () => {
+    const bookings = [{ id: 'abc', date: '2026-04-09', space: 'A', bookedBy: 'Alice' }];
+    mockReadBlobWithEtag.mockResolvedValue({ data: bookings, etag: 'e1' });
+    mockWriteBlobConditional.mockResolvedValue();
+
+    await handler(req({ id: 'abc', name: 'Alice' }));
+
+    expect(mockAppendAuditLog).toHaveBeenCalledWith(
+      expect.anything(),
+      { action: 'cancel', space: 'A', date: '2026-04-09', bookedBy: 'Alice' }
+    );
+  });
+
+  test('does not call appendAuditLog when booking id not found', async () => {
+    mockReadBlobWithEtag.mockResolvedValue({ data: [], etag: 'e1' });
+
+    await handler(req({ id: 'nonexistent', name: 'Alice' }));
+
+    expect(mockAppendAuditLog).not.toHaveBeenCalled();
   });
 });
 
