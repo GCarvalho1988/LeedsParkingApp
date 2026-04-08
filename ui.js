@@ -847,10 +847,11 @@ async function _renderBookingsTab(container) {
 
 function _fmtTs(ts) {
   const d = new Date(ts);
+  const tz = 'Europe/London';
   return (
-    d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) +
+    d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: tz }) +
     ', ' +
-    d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+    d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: tz })
   );
 }
 
@@ -874,6 +875,11 @@ async function _renderAuditLogTab(container) {
   if (entries.error === 'unauthorized') {
     _adminPassword = null;
     container.innerHTML = '<p style="color:#dc2626;font-size:0.85rem;">Session expired. Please reload.</p>';
+    return;
+  }
+
+  if (!Array.isArray(entries)) {
+    container.innerHTML = '<p style="font-size:0.85rem;color:#dc2626;">Unexpected response from server.</p>';
     return;
   }
 
@@ -945,7 +951,8 @@ async function _renderAuditLogTab(container) {
   filterRow.appendChild(_textFilter('ts'));
   filterRow.appendChild(_selectFilter('action', [['book', 'Book'], ['cancel', 'Cancel']]));
   filterRow.appendChild(_textFilter('bookedBy'));
-  filterRow.appendChild(_selectFilter('space', [['A', 'A'], ['B', 'B']]));
+  const spaceOpts = [...new Set(allEntries.map((e) => String(e.space)))].sort().map((s) => [s, s]);
+  filterRow.appendChild(_selectFilter('space', spaceOpts));
   filterRow.appendChild(_dateFilter('date'));
   filterRow.appendChild(_textFilter('ip'));
   thead.appendChild(filterRow);

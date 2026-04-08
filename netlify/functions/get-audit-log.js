@@ -1,6 +1,9 @@
 import { readBlob } from './_blob-helpers.js';
 
 export default async (req) => {
+  if (!process.env.ADMIN_PASSWORD) {
+    return new Response(JSON.stringify({ error: 'misconfigured' }), { status: 500 });
+  }
   const body = await req.json();
   if (body.password !== process.env.ADMIN_PASSWORD) {
     return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 200 });

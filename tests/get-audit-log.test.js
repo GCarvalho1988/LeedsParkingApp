@@ -25,6 +25,14 @@ describe('get-audit-log: auth', () => {
     expect(await res.json()).toEqual({ error: 'unauthorized' });
     expect(mockReadBlob).not.toHaveBeenCalled();
   });
+
+  test('returns misconfigured when ADMIN_PASSWORD env var is not set', async () => {
+    delete process.env.ADMIN_PASSWORD;
+    const res = await handler(req({ password: 'anything' }));
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: 'misconfigured' });
+    expect(mockReadBlob).not.toHaveBeenCalled();
+  });
 });
 
 describe('get-audit-log: success', () => {
